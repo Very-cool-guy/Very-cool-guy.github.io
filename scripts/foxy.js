@@ -2,7 +2,7 @@
 document.addEventListener("click", () => {
   // wait 200ms until barrel roll is done
   setTimeout(() => {
-      if (Math.random() < 0.1) {
+      if (Math.random() < 0.05) {
           jumpscare();
       }
   }, 200);
