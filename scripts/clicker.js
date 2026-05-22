@@ -19,6 +19,7 @@ function createClick(x, y, clicks) {
     counter.style.left = x + "px";
     counter.style.color = "white";
     counter.style.fontSize = "20px";
+    counter.style.pointerEvents = "none";
 
     document.getElementsByTagName("body")[0].appendChild(counter);
 }

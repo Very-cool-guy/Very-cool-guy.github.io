@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="styles/style.css">
     <link rel="stylesheet" href="styles/licensepopup.css">
     <link rel="stylesheet" href="styles/chat.css">
-	  <link rel="icon" type="image/png" href="resources/gay.png"/>
+	  <link rel="icon" type="image/png" href="resources/icon.png"/>
+    <link rel="manifest" href="scripts/manifest.json">
     <script src="script.js"></script>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
@@ -23,7 +24,7 @@
     <script src="scripts/clicker.js"></script>
     <script src="scripts/barrelroll.js" defer></script>
   </head>
-  <body>
+  <body class="barrelroll">
   <canvas id="CAN" style="position: fixed; width: 100vw; height: 100vh; z-index: -2"></canvas>
   <header>
     <a href="randomassart.html">Random Art</a>
@@ -39,6 +40,9 @@
     <a href="quavercorner.html">QUAVER CORNER!!!</a>
     <a href="stupidcat.html">Stupid Cat Clicker</a>
   </header>
+    
+    <br>
+    <a id="barrelroll" onclick="barrelrolltoggel()">DISABLE BARREL ROLL</a>
     
     <marquee>
     <p>The missile knows where it is at all times. It knows this because it knows where it isn't. By subtracting where it is from where it isn't, or where it isn't from where it is (whichever is greater), it obtains a difference, or deviation. The guidance subsystem uses deviations to generate corrective commands to drive the missile from a position where it is to a position where it isn't, and arriving at a position where it wasn't, it now is. Consequently, the position where it is, is now the position that it wasn't, and it follows that the position that it was, is now the position that it isn't. In the event that the position that it is in is not the position that it wasn't, the system has acquired a variation, the variation being the difference between where the missile is, and where it wasn't. If variation is considered to be a significant factor, it too may be corrected by the GEA. However, the missile must also know where it was. The missile guidance computer scenario works as follows. Because a variation has modified some of the information the missile has obtained, it is not sure just where it is. However, it is sure where it isn't, within reason, and it knows where it was. It now subtracts where it should be from where it wasn't, or vice-versa, and by differentiating this from the algebraic sum of where it shouldn't be, and where it was, it is able to obtain the deviation and its variation, which is called error.</p>
@@ -258,7 +262,7 @@
   <p>Hewwo! :3</p>
   <p>Please be patient with me</p>
   <img src="resources/polish-patriots-check-post-sprawdzony-przez-polskich-patriotów.png" alt=":3">
-	  
+	<div><img width="200px"src="resources/iseeyou.png"></div>
   <a href="secret.html">?</a>
   </body>
 </html>

@@ -1,0 +1,17 @@
+{
+  "short_name": "VeryCoolGuy",
+  "name": "Very Cool Guy",
+  "icons": [
+    {
+      "src": "/resources/icon.png",
+      "sizes": "200x200",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#00966f",
+  "display": "Standalone",
+  "scope": "/",
+  "screenshots": [],
+  "description":"ihavenoideawhatimdoingwithmylife"
+}
