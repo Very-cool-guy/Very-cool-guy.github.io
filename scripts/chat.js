@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(() => {
       addMessage(
-        "All human representatives are currently unavailable. Please meow at your screen and try again in 2-3 minutes.",
+        "All human representatives are currently unavailable. Artix is booted, pacman is happy, and the penguin has claimed the throne. Please meow at your screen and try again in 2-3 minutes.",
         "bot"
       );
     }, 250);
