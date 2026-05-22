@@ -13,4 +13,7 @@ remember to leave the site gayer then when you found it
 
 oh yeah and FIX BUGS PLZPLZPLZ
 
+# contributing
 resources like pictures and gifs in the `resources/` folder! (i can move them myself but it would be nice)
+
+please do not add random unverified zip files or exe files. see pr #43, #40
