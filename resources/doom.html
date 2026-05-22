@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DOOM</title>
+  <style>
+    body { background:#000; margin:0; display:flex; justify-content:center; align-items:center; height:100vh; }
+    canvas { display:block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <script>
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      arguments: ['-iwad', 'doom1.wad']
+    };
+  </script>
+  <script src="chocolate-doom.js"></script>
+</body>
+</html>
