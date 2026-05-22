@@ -381,7 +381,7 @@
 	<div id="chat" style="position:fixed;left:12px;bottom:12px;z-index:9999;background:#111;color:#fff;padding:10px;border:1px solid #444;width:260px">
 	  <div id="msgs" style="height:180px;overflow:auto;font-size:14px;margin-bottom:8px"></div>
 	  <form id="f">
-	    <input id="msg" maxlength="500" placeholder="anon msg" style="width:100%;box-sizing:border-box">
+	    <input id="msg" maxlength="100" placeholder="anon msg" style="width:100%;box-sizing:border-box">
 	    <button style="width:100%;margin-top:6px">send</button>
 	  </form>
 	</div>
@@ -390,12 +390,16 @@
 	const sb = supabase.createClient("https://otogrqqghwctefdzojuc.supabase.co","sb_publishable_B5HeLDyN4AmZYANoUTRWcw_myXJg_Um");
 	const chat = document.getElementById("chat"), msgs = chat.querySelector("#msgs"), msg = chat.querySelector("#msg");
 	
+	function esc(s){
+	  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+	}
+
 	await sb.auth.signInAnonymously();
 	
 	async function load() {
 	  const { data, error } = await sb.from("discussion_posts").select("message,created_at").order("created_at",{ascending:false}).limit(50);
 	  if (error) return alert(error.message);
-	  msgs.innerHTML = data.map(x => `<div><b>anon</b><br>${x.message}</div>`).join("");
+	  msgs.innerHTML = data.map(x => `<div><b>anon</b><br>${esc(x.message)}</div>`).join("");
 	}
 	
 	chat.querySelector("#f").onsubmit = async e => {
