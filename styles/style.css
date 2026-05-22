@@ -5,13 +5,12 @@ html, body {
     width: 100%;
     min-height: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
-    font-family: sans-serif;
 }
 
 header {
     padding: 2vh 0;
     border-radius: .75vh;
+
     background: linear-gradient(90deg,
     #E40303,
     #FF8C00,
@@ -31,6 +30,34 @@ header {
 
 }
 
+nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+nav a {
+    text-decoration: none;
+    color: inherit;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 32px;
+}
+
+nav ul a {
+    text-decoration: none;
+    color: #FFFFFF;
+    font-size: 1rem;
+    font-family: 'Playfair Display', Impact;
+}
+
 
 @keyframes moveGradient {
     from {
@@ -45,7 +72,6 @@ header a {
     color: white;
     mix-blend-mode: difference;
     margin: 1%;
-    cursor: pointer;
 }
 
 
@@ -66,8 +92,7 @@ body {
     animation: prideWave 12s ease-in-out infinite;
     transition: transform 1s;
 }
-
-.barrelroll:active{
+body:active {
     transform: rotate(1turn);
     transition: none;
 }
