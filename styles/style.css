@@ -31,6 +31,7 @@ header {
   );
   background-size: 200%, 100%;
   animation: moveGradient 5s linear infinite;
+  overflow: hidden;
 }
 
 @keyframes moveGradient {
@@ -213,14 +214,24 @@ nav a {
 nav ul {
     list-style: none;
     display: flex;
-    gap: 32px;
+    gap: 22px;
 }
 
 nav ul a {
     text-decoration: none;
     color: #FFFFFF;
-    font-size: 1rem;
     font-family: 'Playfair Display', Impact;
+}
+
+nav ul li {
+    white-space: nowrap;
+    text-align: center;
+    font-size: 1.05rem;
+}
+
+#DOOM a {
+    font-family: 'AmazDooM', sans-serif;
+    font-size: 3rem;
 }
 
 
