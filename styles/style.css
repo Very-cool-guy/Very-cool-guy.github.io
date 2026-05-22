@@ -143,6 +143,58 @@ body {
   padding: 2rem;
 }
 
+
+.kirk-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6rem;
+    padding: 4rem 0;
+}
+
+.gallery-kirk {
+    position: relative;
+    width: min(300px, 80vw);
+    height: min(250px, 66vw);
+    transform-style: preserve-3d;
+    animation: rotate 35s linear infinite;
+}
+
+.gallery-kirk-reverse {
+    animation: rotate-reverse 35s linear infinite;
+}
+
+.gallery-kirk span {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform-origin: center;
+    transform-style: preserve-3d;
+    transform: rotateY(calc(var(--i) * 72deg)) translateZ(min(320px, 85vw));
+    overflow: hidden;
+    border: 4px solid white;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.gallery-kirk span img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@keyframes rotate {
+    from { transform: perspective(1200px) rotateY(0deg); }
+    to   { transform: perspective(1200px) rotateY(360deg); }
+}
+
+@keyframes rotate-reverse {
+    from { transform: perspective(1200px) rotateY(360deg); }
+    to   { transform: perspective(1200px) rotateY(0deg); }
+}
+
+
 nav {
     display: flex;
     justify-content: center;
