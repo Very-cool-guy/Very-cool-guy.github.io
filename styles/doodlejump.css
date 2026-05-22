@@ -1,0 +1,137 @@
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 239, 168, 0.95), transparent 24rem),
+    linear-gradient(180deg, #7dd7ff 0%, #fdf7cf 52%, #98dc75 100%);
+  color: #132616;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.jump-header {
+  align-items: center;
+  background: #132616;
+  color: #ffffff;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(4rem, 1fr) auto minmax(4rem, 1fr);
+  padding: 0.8rem clamp(1rem, 4vw, 2rem);
+}
+
+.jump-header h1 {
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  margin: 0;
+  text-align: center;
+}
+
+.jump-header a {
+  color: #ffffff;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.25em;
+}
+
+.jump-header a:last-child {
+  justify-self: end;
+}
+
+.jump-stage {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 auto;
+  max-width: 38rem;
+  padding: 1rem;
+}
+
+.hud {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.82);
+  border: 0.2rem solid #132616;
+  border-radius: 0.5rem;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr auto auto;
+  max-width: min(100%, 400px);
+  padding: 0.6rem;
+  width: 100%;
+}
+
+.hud span {
+  font-weight: 700;
+}
+
+.hud button,
+.touch-controls button {
+  background: #f9db55;
+  border: 0.18rem solid #132616;
+  border-radius: 0.45rem;
+  box-shadow: 0 0.18rem 0 #132616;
+  color: #132616;
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.8rem;
+}
+
+.hud button:active,
+.touch-controls button:active {
+  box-shadow: none;
+  transform: translateY(0.18rem);
+}
+
+#doodle-board {
+  aspect-ratio: 2 / 3;
+  border: 0.25rem solid #132616;
+  border-radius: 0.5rem;
+  box-shadow: 0 1rem 2.5rem rgba(19, 38, 22, 0.25);
+  display: block;
+  image-rendering: auto;
+  max-height: calc(100vh - 11rem);
+  max-width: min(100%, 400px);
+  touch-action: none;
+  width: 100%;
+}
+
+.touch-controls {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(6rem, 1fr));
+  max-width: min(100%, 400px);
+  width: 100%;
+}
+
+.touch-controls button {
+  font-size: 2rem;
+  line-height: 1;
+  min-height: 3.5rem;
+}
+
+@media (max-width: 420px) {
+  .jump-header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .jump-header a:last-child {
+    justify-self: center;
+  }
+
+  .hud {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hud button {
+    grid-column: 1 / -1;
+  }
+}

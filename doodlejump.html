@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Doodle Jump</title>
+    <link rel="icon" type="image/png" href="resources/icon.png">
+    <link rel="stylesheet" href="styles/doodlejump.css">
+    <script src="scripts/doodlejump.js" defer></script>
+  </head>
+  <body>
+    <header class="jump-header">
+      <a href="index.html">Home</a>
+      <h1>Doodle Jump</h1>
+      <a href="resources/doodlejump/THIRD_PARTY_NOTICES.md">Credits</a>
+    </header>
+
+    <main class="jump-stage" aria-label="Doodle Jump game">
+      <section class="hud" aria-live="polite">
+        <span>Score <strong id="score">0</strong></span>
+        <span id="game-state">Ready</span>
+        <button id="start-game" type="button">Start</button>
+      </section>
+
+      <canvas id="doodle-board" width="400" height="600"></canvas>
+
+      <section class="touch-controls" aria-label="Touch controls">
+        <button id="move-left" type="button" aria-label="Move left">&larr;</button>
+        <button id="move-right" type="button" aria-label="Move right">&rarr;</button>
+      </section>
+    </main>
+  </body>
+</html>
