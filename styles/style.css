@@ -122,3 +122,24 @@ body:active {
     width: 45rem;
     padding: 2rem;
 }
+
+/* styles for the foxy jumpscare video overlay */
+#foxy-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#foxy-overlay.hidden {
+    display: none;
+}
+
+#foxy-video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+}
