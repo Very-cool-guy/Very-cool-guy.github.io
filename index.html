@@ -376,4 +376,38 @@
     <script src="scripts/music.js"></script>
     <script src="scripts/soundboard.js"></script>
   </body>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	
+	<div id="chat" style="position:fixed;left:12px;bottom:12px;z-index:9999;background:#111;color:#fff;padding:10px;border:1px solid #444;width:260px">
+	  <div id="msgs" style="height:180px;overflow:auto;font-size:14px;margin-bottom:8px"></div>
+	  <form id="f">
+	    <input id="msg" maxlength="500" placeholder="anon msg" style="width:100%;box-sizing:border-box">
+	    <button style="width:100%;margin-top:6px">send</button>
+	  </form>
+	</div>
+	
+	<script type="module">
+	const sb = supabase.createClient("https://otogrqqghwctefdzojuc.supabase.co","sb_publishable_B5HeLDyN4AmZYANoUTRWcw_myXJg_Um");
+	const chat = document.getElementById("chat"), msgs = chat.querySelector("#msgs"), msg = chat.querySelector("#msg");
+	
+	await sb.auth.signInAnonymously();
+	
+	async function load() {
+	  const { data, error } = await sb.from("discussion_posts").select("message,created_at").order("created_at",{ascending:false}).limit(50);
+	  if (error) return alert(error.message);
+	  msgs.innerHTML = data.map(x => `<div><b>anon</b><br>${x.message}</div>`).join("");
+	}
+	
+	chat.querySelector("#f").onsubmit = async e => {
+	  e.preventDefault();
+	  const v = msg.value.trim();
+	  if (!v) return;
+	  const { error } = await sb.from("discussion_posts").insert([{ message: v }]);
+	  if (error) return alert(error.message);
+	  msg.value = "";
+	  load();
+	};
+	
+	load();
+	</script>
 </html>
