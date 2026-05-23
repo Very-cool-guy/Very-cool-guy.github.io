@@ -7,7 +7,8 @@
         upgrades: {
             "upgrade-claw": 0,
             "upgrade-paw": 0,
-            "upgrade-stupid": 0
+            "upgrade-stupid": 0,
+            "upgrade-cheater": 0
         }
     };
 

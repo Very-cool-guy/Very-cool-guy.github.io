@@ -1,0 +1,133 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container {
+  min-height: 600px;
+  max-width: 99%;
+  border: 2px solid #444;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: row;
+  background-color: #2c2c2c;
+}
+
+
+
+
+.chat-sidebar {
+  width: 120px;
+  background-color: #333;
+  padding: 10px;
+  border-right: 1px solid #444;
+  color: #f1f1f1;
+  overflow-y: auto;
+}
+
+.chat-sidebar h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.chat-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.chat-sidebar li {
+    padding: 5px;
+    border-radius: 3px;
+    margin-bottom: 5px;
+    background-color: #2c2c2c;
+    text-align: center;
+}
+
+
+
+.chat-header {
+  padding: 10px;
+  background-color: #3a3a3a;
+  border-bottom: 1px solid #444;
+  text-align: center;
+}
+
+.chat-messages {
+  padding: 10px;
+  height: 88%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  margin-bottom: 10px;
+}
+
+.message .user {
+  font-weight: bold;
+  color: #4fc3f7;
+}
+.message .user::before {
+  content: "<";
+}
+.message .user::after {
+  content: ">";
+}
+
+.message .admin {
+  font-weight: bold;
+  font-style: italic;
+  color: #ff2222;
+}
+
+.chat-input {
+  display: flex;
+  border-top: 1px solid #444;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+  background-color: #3a3a3a;
+  color: #f1f1f1;
+}
+
+.chat-input button {
+  padding: 10px 15px;
+  border: 2px solid #ff00cc;
+  background-color: #4fc3f7;
+  color: #000;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chat-input button:hover {
+  background-color: #39a1d1;
+}
+
+
+.chat-right-panel {
+  background-color: #777;
+  color: #ffcc00;
+  padding: 10px;
+  border-left: 1px solid #555;
+  display: none; /* hidden by default */
+  text-align: center;
+}

@@ -5,7 +5,7 @@
         <link rel="stylesheet" href="styles/quaver.css">
 
         <title>quaver unbeatable</title>
-
+        <link rel="icon" href="resources/quaver/quaver.jpeg">
     </head>
 
     <body>
@@ -16,6 +16,23 @@
 
         <h1>THE QUAVER CORNER</h1>
 
+      <button onclick="startMusic()">
+        music? (not responsible for any crying involved)
+    </button>
+
+    <audio id="music" src="resources/quaver/BOOKEND SONG.mp3" loop></audio>
+
+    <script>
+    function startMusic() {
+
+        const music =
+            document.getElementById("music");
+
+        music.volume = 0.75;
+
+        music.play();
+}
+</script>
         <div class="gallery">
 
             <div class="item">

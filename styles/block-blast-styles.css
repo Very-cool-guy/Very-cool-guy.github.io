@@ -1,0 +1,47 @@
+#block-blast-ui {
+    text-align: center;
+    padding: 0;
+    user-select: none;
+}
+
+#block-blast-ui h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+    letter-spacing: 0.6px;
+}
+
+#block-blast-info {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+#block-blast-info span {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.block-blast-button {
+    background: transparent;
+    border: 1px solid rgba(230, 230, 230, 0.12);
+    color: #e6e6e6;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#block-blast-game {
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+    box-shadow:
+        0 6px 28px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    max-width: calc(100% - 20px);
+    background: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.02),
+            rgba(255, 255, 255, 0.01));
+}

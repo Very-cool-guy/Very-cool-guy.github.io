@@ -10,6 +10,7 @@
 	  <link rel="icon" type="image/png" href="resources/icon.png"/>
     <link rel="manifest" href="scripts/manifest.json">
     <link rel="stylesheet" href="styles/soundboard.css">
+    <link rel="stylesheet" href="styles/block-blast-styles.css">
     <script src="script.js"></script>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
@@ -25,8 +26,11 @@
     <!-- this is where niko code ends, thank you!!!-->
 
     <script src="scripts/script.js"></script>
-	  <script src="scripts/background.js" defer=""></script>
+	<script src="scripts/background.js" defer=""></script>
     <script src="scripts/clicker.js"></script>
+
+    <link rel="stylesheet" href="styles/megumin.css">
+    <script src="scripts/megumin.js"></script>
   </head>
   <body class="barrelroll">
   <canvas id="CAN" style="position: fixed; width: 100vw; height: 100vh; z-index: -2"></canvas>
@@ -35,22 +39,44 @@
         <ul>
             <li><a href="randomassart.html">Random Art</a></li>
             <li><a href="randomassgifs.html">Random Gifs</a></li>
-            <li><a href="DnD/DnDcreator.html" target="_blank">Character creator 9000</a></li>
+            <li><a href="DnD/DnDcreator.html">Character creator 9000</a></li>
+            <li><a href="frogzone.html">Frog Zone</a></li>
             <li><a href="itemshop.html">Item Shop</a></li>
             <li><a href="lowkirkenuinely.html">Shrine of Kirk</a></li>
             <li><a href="the_shrine.html">🇦🇹🇭🇺 Austria-Hungary Chan Shrine 🇭🇺🇦🇹</a></li>
-            <li id="DOOM"><a href="doom-wasm/index.html" target="_blank">DOOM!</a></li>
-            <li><a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">say hi to reddit!</a></li>
-            <li><a href="subsite/subsitenav.html">Gallery</a></li>
+            <li><a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">say hi to reddit!</a></li>
+            <li><a href="subsite/subsitenav.html">Subsite</a></li>
             <li><a href="movies.html">WATCH MOVIES 4 FREE</a></li>
             <li><a href="https://message.printerjoe.co.uk/" target="_blank"> PLS Harass printerjoe</a></li>
             <li><a href="quavercorner.html">QUAVER CORNER!!!</a></li>
             <li><a href="stupidcat.html">Stupid Cat Clicker</a></li>
-          <li> <a href="randomMtgCard.html" target="_blank">Random mtg Card</a></li>
+            <li><a href="trans.html">Trans</a></li>
+            <li> <a href="randomMtgCard.html">Random mtg Card</a></li>
+            <li><a href="subsite/irc.html">Slug-IRC</a></li>
+            <li><a href="hazah/Hazahsplace.html">Hazahs Place, Stay Out.</a></li>
+			<li><a href="linux.html" style="color: #0f0; font-style: italic;">🐧USE LINUX!!🐧</a></li>
+			<li><a href="https://message.printerjoe.co.uk">Harass printerjoe</a></li>
+            <li><a href="supgosbuster.html">super ghost bust</a></li>
         </ul>
     </nav>
   </header>
     
+	<input type="range" id="volume" min="0" max="1" step="0.01" value="0.35">
+	<button onclick="playMenuMusic('./resources/th9.mp3')">
+	  Index Music
+	</button>
+
+
+	<script>
+	function playMenuMusic(soundFile) {
+	  const audio = new Audio(soundFile);
+		document.getElementById("volume").addEventListener("input", (new_volume) => {audio.volume = new_volume.target.value;});
+	  const volume = document.getElementById("volume").value;
+	  audio.volume = volume;
+	  audio.play();
+	}
+	</script>
+
 <!-- BOOMBOX -->
 <!-- go to scripts/music.js to add more music! -->
 	  
@@ -88,7 +114,7 @@
     </div>
 
 </div>
-  <div class="rk-rpanel">
+  <div class="rk-rpanel" id="reze-video" onclick="YeetusdeletusReze()" style="cursor: pointer;">
     <video width="200" height="355" autoplay loop muted>
       <source src="resources/reze_iris_out.mp4" type="video/mp4">
     </video>
@@ -159,23 +185,34 @@
     <br>
     <button id="barrelroll" onclick="barrelrolltoggel()">DISABLE BARREL ROLL</button>    
     
+    <br>
+    <button id="meguminButton" onclick="meguminToggle()">Megumin Mode: Off</button>
+    <img id="meguminFollow" src="resources/megumin.webp">
+    
+    <button id="meguminClear" onclick="clearMegumin();"> 爆裂を削除 (Delete Explosions) !!! </button>
+    <br>
+
     <marquee>
     <p>The missile knows where it is at all times. It knows this because it knows where it isn't. By subtracting where it is from where it isn't, or where it isn't from where it is (whichever is greater), it obtains a difference, or deviation. The guidance subsystem uses deviations to generate corrective commands to drive the missile from a position where it is to a position where it isn't, and arriving at a position where it wasn't, it now is. Consequently, the position where it is, is now the position that it wasn't, and it follows that the position that it was, is now the position that it isn't. In the event that the position that it is in is not the position that it wasn't, the system has acquired a variation, the variation being the difference between where the missile is, and where it wasn't. If variation is considered to be a significant factor, it too may be corrected by the GEA. However, the missile must also know where it was. The missile guidance computer scenario works as follows. Because a variation has modified some of the information the missile has obtained, it is not sure just where it is. However, it is sure where it isn't, within reason, and it knows where it was. It now subtracts where it should be from where it wasn't, or vice-versa, and by differentiating this from the algebraic sum of where it shouldn't be, and where it was, it is able to obtain the deviation and its variation, which is called error.</p>
     </marquee>
 
-
-    <video width="600" height="450" autoplay loop>
-      <source src="resources/punchyou.mp4" type="video/mp4">
-    </video>
-
     <iframe width="420" height="315"
-      src="https://www.youtube.com/embed/yvZP3YQNuRo?mute=1&loop=1&playlist=yvZP3YQNuRo">
+        src="https://www.youtube.com/embed/yvZP3YQNuRo?autoplay=1&mute=1&loop=1&playlist=yvZP3YQNuRo">
     </iframe>
 
+	<link rel="stylesheet" href="styles/github.css">
+	<github>
+	  <a href="https://github.com/Very-cool-guy/Very-cool-guy.github.io">
+        <img src="resources/GitHub_Invertocat_Black.svg" width="100%" height="auto">
+      </a>
+    </github>
 
     <h1>PLAY MY CARD IS BETTER THAN YOUR CARD!!!</h1>
-    <img src="resources/capsule_616xa353.jpg">
+        <p>pls pls pls pls pls pls pls - Himejoshiheart</p>
 
+    <img src="resources/capsule_616xa353.jpg">
+    <p>just look at him... - HimejoshiHeart</p>
+			
     <div style="display: flex; overflow: hidden; gap: 1rem; padding: 0.5rem 0;">
       <img src="resources/HungryGhostsCaspule(1).png" alt="Hungry Ghosts Capsule" style="width: 220px; height: 220px; object-fit: contain; flex-shrink: 0; animation: spin3d 4s linear infinite;">
       <img src="resources/HungryGhostsCaspule(1).png" alt="Hungry Ghosts Capsule" style="width: 220px; height: 220px; object-fit: contain; flex-shrink: 0; animation: spin3d 4s linear infinite;">
@@ -185,8 +222,45 @@
       <img src="resources/HungryGhostsCaspule(1).png" alt="Hungry Ghosts Capsule" style="width: 220px; height: 220px; object-fit: contain; flex-shrink: 0; animation: spin3d 4s linear infinite;">
     </div>
     <p>^^ Cool roguelite tower defense game, fight ghosts with desserts and drinks through a haunted mansion, hand drawn by me comes out early access for Halloween :D</p>
+<p>contrary to what it looked like before i did not make the game above but i hope it does well lol - HimejoshiHeart</p>
+    <details>
+      <summary>SiIvagunner Lore</summary>
+      So first there was a channel called Silvagunner who uploaded music from video games, then they got taken down. There was a tribute channel which did the same called Gilvasunner.
+      At some point in 2016 an internet user named Chaze the Chat decided to make an edit of some video game songs, mostly based off of a joke his friends thought was really funny: the Flintstones theme song. This was in reference to when Vinesauce played a bootleg game labeled "Mario 7" which then showed a title screen of "7 GRAND DAD". In actuality, it was a Flintstones game, and so it played the theme music for it. 
+      Other video game songs could be mashed up with things that maybe sounded similar, or just straight up overlayed with a meme song or pop song.
+      These music jokes turned into the channel GiIvasunner (with a capital i to look like an L) which had a couple other recurring jokes, such as the intro to the animated series "The Nutshack." Videos posted were portrayed as if they were the original video game songs, with the description only including the original song title, composer, game, and platforms the game was on. This has since fooled many people looking for the actual original music.
+      Multiple people submitted music to this channel, and they started to have a steady upload schedule. However, in April of that year, the channel got taken down for impersonation of Gilvasunner, so it was reinstated as SiIvagunner, in reference to the old original video game music channel. 
+      SiIvagunner's "slogan" is "I only upload high quality video game rips." This has lead to people calling the music edits "high quality rips", or sometimes just "rips".
+      The "lore" of SiIvagunner mostly started with events such as the "reboot", which featured the character of SiIvagunner himself installing a "ripping software" which somehow reset the timeline to include the Simpsons instead of the Flintstones, as well as other "opposite" changes.
+      This was also partially a way to get fans of the channel to stop complaining about the anime song "Snow Halation" being used as a new joke, as many commenters originally hated "gay anime shit" but then came to love it, as the song has since become a staple of the channel.
+      The reboot ended after a community ARG and videos which involved edited clips of the Youtuber Chad Warren fighting back against the one who orchestrated the timeline reset, "The Voice Inside Your Head", who is basically a humanoid figure with an upside down triangle head. With the power of Snow Halation and "the MF like button", he was stopped from trying to destroy or take over SiIvagunner or something idk
+      Wood Man (from mega man 3) also showed up at some point from a virus that was the result of SiIva trying to rip music from the video game "Mighty No. 9". Wood Man didn't do much for a while but became another psuedo mascot for the channel in the future.
+      After the summer of 2016, the channel managers decided that it was a fun time, but high quality rips would come to a close in early autumn. The channel posted dozens of rips with everyone's favorite jokes, getting the best quality possible, and finally ended in October with a rip of "Title Theme and Ending" from the game "7 GRAND DAD", putting to rest the legacy with the game that started everything.
+      However, the rippers wanted to also do some holiday events for just a bit more fun, so they had a Halloween special.
+      And then a Christmas special, complete with an entire visual novel-esque story, planned to have 12 episodes: "The SiIvagunner Christmas Comeback Crisis". 
+      Featuring the return of The Voice Inside Your Head, as well as characters representing common jokes (and for some reason a lot of Kirby game characters), the lore expanded into every "joke" being their own character living in a massive city, while SiIvagunner himself slept (he had just created his highest quality rip, and was tired (Wood Man hosted the Halloween event)).
+      The first few episodes came out in the first couple weeks of December, but the scope of the project and the availability of the artists meant that the event kind of kept going far beyond originally intended. At some point, the channel managers decided that SiIvagunner would just keep going like they had before, with the original "channel ending" being the end of a "Season 1" of lore.
+      (to be continued)
+    </details>
 
-    <p>pls pls pls pls pls pls pls - Himejoshiheart</p>
+
+    <!-- A really fun and cool game-->
+    <br>
+    <p style="font-style: bold; text-align: center;">This is a game I made as a final project for a class. If it sucks then make a pull request
+      and make it better.</p>
+    <div id="block-blast-ui">
+      <h3>[BLOCK][BLAST]</h3>
+      <div id="info">
+        <button class="block-blast-button" id="pauseBtn">Pause</button>
+        <button class="block-blast-button" id="restartBtn">Restart</button>
+      </div>
+    </div>
+    <canvas id="block-blast-game"></canvas>
+    <p style="font-style: bold; text-align: center;">Contributors: Blaze_Programming, Calamariclam, add your name here if you contribute</p>
+    <script src="scripts/block-blast.js"></script>
+    <br>
+			
+	<iframe height="80px" width="300px" frameborder="0" src=https://livecounts.io/embed/youtube-live-subscriber-counter/UClYW-A_5BxpxPxlpUbnaLxQ style="border: 0; width:300px; height:80px;"></iframe>
 
     <p>-</p>
     <p>hi</p>
@@ -238,7 +312,8 @@
     <p> mrrp mrow meow mrrp :3</p>
     <p>bendy was a little devil thing</p>
 	<p>hey im randomly plugging stuff here lol sub to fireflanger</p>
-    <img src="resources/protogen.jpg" alt="Clanker"> <!-- i also have no clue if this will work -->
+    <img src="resources/protogen.jpg" alt="Clanker">
+     <!-- i also have no clue if this will work -->
     <img src="resources/1984boys.gif" alt="boyshehe">
     </marquee>
 
@@ -271,8 +346,6 @@
       Megatron and the others finally catch up and find the Autobots on a movie set. Hoist threatens to drop the humans and the film into a vat of flesh-eating lava if the ‘Cons don’t withdraw. Megatron says he won’t do it, but Hoist drops them in. Content that the film is gone, the Decepticons retreat. Hoist then lifts Spike and Carly from the “lava”, which is just bubbly, muddy water mixed with special effects.
       The Autobots show the film to Wheeljack in the screening room. The Autobot scientist laughs at Megatron because the device Megatron wanted so much is actually worthless. Impressed with Hoist's performance at the lava pit, the director offers him the leading part in a new film, but Hoist declines, saying that his duty as an Autobot comes first, no matter how unglamorous it is.
     </details>
-    <!--Rick Roll, bdstatic.com is a static content delivery domain run by Baidu-->
-    <video src="https://vdse.bdstatic.com/192d9a98d782d9c74c96f09db9378d93.mp4"></video>
 
     <details class="dropdowner">
       <summary>I wiped 🥀🥀🥀</summary>
@@ -336,10 +409,6 @@
       </div>
     <script src="scripts/bottom.js"></script>
 
-	<p>ancient mesopotamian brainrot</p>
-	<video width="900" height="600" controls>
-		<source src="resources/ancient-brainrot.mp4" type="video/mp4">
-	</video>
 	  
       <p>Fun Herpetology Facts from Hazah
 
@@ -360,24 +429,33 @@
     <p>"Why couldn't Augustus Caesar be found in his house? <br> Because...he's Roman!"</p> <!-- added for my friend :D-->
   </div>
 
+  <img src="resources/header.jpg">
+
   <p>Hewwo! :3</p>
   <p>Please be patient with me</p>
-  <img src="resources/polish-patriots-check-post-sprawdzony-przez-polskich-patriotów.png" alt=":3">
+			
   <div><img width="200px"src="resources/iseeyou.png"></div>
-  
-  <video width="320" height="640" autoplay loop>
-    <source src="resources/setyourheartaglaze.mp4" type="video/mp4">
-  </video>
 
   <a href="secret.html">?</a>
+			
+    <marquee>
+    <p>Now that the show is over, and we have jointly exercised our constitutional rights, we would like to leave you with one very important thought: Some time in the future, you may have the opportunity to serve as a juror in a so-called obscenity case. It would be wise to remember that the same people who would stop you from viewing an adult film may be back next year to complain about a book, or even a TV program. If you can be told what you can see or read, then it follows that you can be told what to say or think. Defend your constitutionally protected rights - no one else will do it for you. Thank you.
+	</marquee>
+			
+    
+    <li><a href="vor.html">You’re not ready to face Vor now</a></li>
+    <div class="image-container">
+     <img src="resources/sonic.jpg">
+     <img src="resources/sadwario.jpg">
+    </div>
 
-	  <div style="background-color: black; border: white 5px solid; color: white; padding: 10px; width: 70%">
-        <span>This <strong style="color: yellow;">footer</strong> is <strong style="color: yellow;">pissing</strong> me off<br/>I am the original⠀⠀⠀⠀⠀⠀⠀⠀<strong style="color: yellow;">starwalker</strong></span><br/>
-        <img src="resources/Starwalker_overworld.png" alt="starwalker"/>
-      </div>
-
+	<div style="background-color: black; border: white 5px solid; color: white; padding: 10px; width: 70%">
+      <span>This <strong style="color: yellow;">footer</strong> is <strong style="color: yellow;">pissing</strong> me off<br/>I am the original⠀⠀⠀⠀⠀⠀⠀⠀<strong style="color: yellow;">starwalker</strong></span><br/>
+      <img src="resources/Starwalker_overworld.png" alt="starwalker"/>
+    </div>
 
     <script src="scripts/music.js"></script>
     <script src="scripts/soundboard.js"></script>
+
   </body>
 </html>

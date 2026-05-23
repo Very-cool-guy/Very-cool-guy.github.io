@@ -11,8 +11,10 @@ body {
 }
 
 header {
-  padding: 2vh 0;
+  max-height: 70px;
+  overflow: hidden;
   border-radius: 0.75vh;
+  max-width: 98.5vw;
   background: linear-gradient(
     90deg,
     #e40303,
@@ -30,8 +32,12 @@ header {
     #e40303
   );
   background-size: 200%, 100%;
-  animation: moveGradient 5s linear infinite;
-  overflow: hidden;
+  animation: moveGradient 10s linear infinite;
+  transition: max-height 0.3s ease-out;
+}
+
+header:hover {
+  max-height: 500px;
 }
 
 @keyframes moveGradient {
@@ -214,7 +220,8 @@ nav a {
 nav ul {
     list-style: none;
     display: flex;
-    gap: 22px;
+    gap: 32px;
+    flex-wrap: wrap;
 }
 
 nav ul a {
@@ -245,4 +252,25 @@ nav ul li {
     border: 2px solid #cccccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     z-index: 232;
+}
+
+.slide-out-right {
+    animation: slideOutRight 0.5s ease-in-out forwards;
+}
+
+@keyframes slideOutRight {
+    from {
+        right: 1px;
+        opacity: 1;
+    }
+    to {
+        right: -220px;
+        opacity: 0;
+    }
+}
+.movie-player {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #000;
 }

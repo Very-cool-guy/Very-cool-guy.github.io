@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SUBSITE!!!</title>
+        <link rel="icon" type="image/png" href="/resources/gay.png"/>
+        <!-- go to subsite.css for extra info about ✨pretty✨-->
+        <link rel="stylesheet" href="/subsite/subsite.css">
+        <link rel="stylesheet" href="/styles/block-blast-styles.css">
+        <link rel="stylesheet" href="/styles/music.css">
+    </head>
+    <body class="blast">
+        <nav>
+            <!-- links to other pages-->
+        <a href="subsitenav.html">Back</a>
+        <a href="/index.html">Home</a>
+        </nav>
+        <h2 class="welcome">[BLOCK][BLAST]!!!!!</h2>
+        <h2 class="subtitle">but without the other stuff</h2>
+        <div>
+            <!-- A really fun and cool game-->
+            <br>
+            <div id="block-blast-ui">
+              <h3>[BLOCK][BLAST]</h3>
+              <div id="info">
+                <button class="block-blast-button" id="pauseBtn">Pause</button>
+                <button class="block-blast-button" id="restartBtn">Restart</button>
+              </div>
+            </div>
+            <canvas id="block-blast-game"></canvas>
+            <script src="/scripts/block-blast.js"></script>
+            <br>
+        </div>
+      <!-- BOOMBOX -->
+      <!-- go to scripts/music.js to add more music! -->
+      	  
+      <div id="boombox" class="closed">
+      
+          <div id="boom-toggle">🎵</div>
+      
+          <div id="boom-content">
+      
+              <div id="song-name">
+                  loading...
+              </div>
+      
+              <input type="range" id="seekbar" value="0">
+      
+              <div id="time">
+                  <span id="current-time">0:00</span>
+                  <span id="duration">0:00</span>
+              </div>
+      
+              <div id="controls">
+                  <button id="prev">⏮</button>
+                  <button id="play">⏯</button>
+                  <button id="next">⏭</button>
+                  <button id="shuffle">🔀</button>
+              </div>
+      
+              <div id="volume-container">
+                  🔊
+                  <input type="range" id="volume" min="0" max="1" step="0.01">
+              </div>
+      
+              <div id="playlist"></div>
+      
+          </div>
+          <script src="scripts/music.js"></script>
+      </div>
+    </body>
+</html>
