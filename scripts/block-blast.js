@@ -42,9 +42,9 @@
     const DIAMOND_DAMAGE = 20 // Amount of additional paddle height given by diamonds
     const PINK_RADIUS = 8
     const PINK_SPEED = 240
-    const BLOCKING_RADIUS_MAX = 32
+    const BLOCKING_RADIUS_MAX = 24
     const BLOCKING_RADIUS_MIN = 8
-    const BLOCKING_SPEED = 120
+    const BLOCKING_SPEED = 240
 
     /* --- COLORS --- */
     const COLORS = {
@@ -97,8 +97,66 @@
         PINK_BLOCK_WEIGHT + 
         BLOCKING_BLOCK_WEIGHT
 
+    /* --- BUTTON --- */
+    function button(x, y, w, h, text, operation, hotKey){
+        this.x = x
+        this.y = y
+        this.w = w
+        this.h = h
+        this.text = text
+        this.operation = operation
+        this.isHovering = false
+        this.key = hotKey
+
+        this.update() = {
+            // Check if the mouse is inside the button's boundaries
+            this.isHovering =
+                this.x >= this.x &&
+                this.x <= this.x + this.w &&
+                this.y >= this.y &&
+                this.y <= this.y + this.h
+            if(this.key !== undefined && keys[this.key]){
+                this.isHovering = true
+            }
+        
+            // Start the game if the button is clicked
+            if (this.isHovering && isMouseClicked) {
+                this.operation()
+            }
+            if(this.key !== undefined){
+                hotKey(this.key, this.operation)
+            }
+        }
+        this.display() = {
+            // Button
+            const btnColor = this.isHovering ? COLORS.WHITE : COLORS.WHITE_D
+            drawRoundRect(
+                this.x,
+                this.y,
+                this.w,
+                this.h,
+                10,
+                btnColor,
+            )
+
+            // Button text
+            ctx.fillStyle = COLORS.BLACK
+            ctx.font = '28px system-ui, sans-serif'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(
+                this.text,
+                this.x + this.w / 2,
+                this.y + this.h / 2,
+            )
+        }
+    }
+
     /* --- GAME STATE VARIABLES --- */
-    const menuButton = { x: 500, y: 350, w: 200, h: 60, isHovering: false }
+    // const menuButton = { x: 500, y: 350, w: 200, h: 60, isHovering: false }
+    let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, 32) //32 is the key code for space
+    let resumeButton = new button(500 - 110, 350, 200, 60, 'Cancel', resume, 32)
+    let resetButton = new button(500 + 110, 350, 200, 60, 'Restart', reset, 13) //13 is the key code for enter
     let currentScene = GAME_SCENE_NAME
     let livesLostCount = 0
     let currentScore = 0
@@ -132,6 +190,16 @@
         diamondPaddle.bonus = INITIAL_DIAMOND_BONUS
         projectileTimer = 0
     }
+    function considerReset() {
+        currentScene = 'maybeReset'
+    }
+    function reset(){
+        startGame()
+        currentScene = 'game'
+    }
+    function resume(){
+        currentScene = 'game'
+    }
 
     function die() { //Clear all balls and reset paddle and serving ball, but maintain blocks
         paddle.y = (VIRTUAL_HEIGHT - PADDLE_HEIGHT_INITIAL) / 2
@@ -158,6 +226,12 @@
             ? 'Resume'
             : 'Pause'
         lastTime = performance.now()
+    }
+
+    function hotkey(key, effect){
+        if(releasedKeys[key]){
+            effect()
+        }
     }
 
     // Function to generate angles that are not too horizontal
@@ -251,10 +325,12 @@
     })
 
     const keys = {}
+    const releasedKeys = {}
     window.addEventListener('keydown', (e) => {
         keys[e.key.toLowerCase()] = true // Use toLowerCase for consistent key checking
     })
     window.addEventListener('keyup', (e) => {
+        releasedKeys[e.key.toLowerCase()] = true //just gotta add a thing that sets everything to false at the end
         keys[e.key.toLowerCase()] = false
     })
 
@@ -379,6 +455,22 @@
         const dist = Math.sqrt(Math.abs(Math.pow(circle1.x - circle2.x, 2) + Math.pow(circle1.y - circle2.y, 2)))
         const colDist = circle1.r + circle2.r
         return dist <= colDist
+    }
+
+    function hitBall(thePaddle, ball){
+        // Calculate bounce angle based on relative hit position on the paddle
+        const relativeY = (ball.y - (thePaddle.y + thePaddle.h / 2)) / (thePaddle.h / 2)
+        const bounceAngle = relativeY * (Math.PI / 3) // Max angle of +/- 60 degrees
+
+        // Set velocity and reset state
+        ball.vx = Math.cos(bounceAngle) * ball.speed
+        ball.vy = Math.sin(bounceAngle) * ball.speed
+        ball.isDisabled = false
+        ball.blocksHitCount = ball.type === 'piercing' ? 0 : Infinity // Reset block hit count
+        ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
+        if(ball.type === 'blocking')
+            ball.r = BLOCKING_RADIUS_MAX
+        ball.x = thePaddle.x + thePaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
     }
 
     // Helper to draw a rounded rectangle
@@ -690,6 +782,7 @@
                         this.y + this.h / 2,
                         BALL_RADIUS,
                         'piercing',
+                        BALL_SPEED,
                         true,
                     )
                     piercingBall.vx = BALL_SPEED * Math.cos(piercingAngle)
@@ -776,6 +869,7 @@
                             this.y + this.h / 2,
                             DIAMOND_RADIUS,
                             'diamond',
+                            DIAMOND_SPEED,
                         )
                         diamond.vx = DIAMOND_SPEED * Math.cos(angle)
                         diamond.vy = DIAMOND_SPEED * Math.sin(angle)
@@ -804,6 +898,7 @@
                         BLOCKING_RADIUS_MIN,
                         'blocking',
                         true,
+                        BLOCKING_SPEED
                     )
                     blockingBall.vx = BLOCKING_SPEED * Math.cos(blockingAngle)
                     blockingBall.vy = BLOCKING_SPEED * Math.sin(blockingAngle)
@@ -939,7 +1034,7 @@
     generateBlocks()
 
     // BALL OBJECT
-    function Ball(x, y, radius, type, isDisabled = false) {
+    function Ball(x, y, radius, type, speed = BALL_SPEED, isDisabled = false) {
         this.x = x
         this.y = y
         this.r = radius
@@ -950,6 +1045,7 @@
         this.isDestroyed = false // Corresponds to `dead` in original
         this.vx = 0
         this.vy = 0
+        this.speed = speed
         this.spawnTime = performance.now() + Math.random() * 1000 // For bomb pulse timing
 
         this.update = function (dt) { //the ball updates function
@@ -1123,14 +1219,24 @@
             case 'game':
                 if (!isPaused && !isGameOver) {
                     updateGame(dt)
+                    hotkey('r', considerReset)
                 }
                 if (!isPaused) {
                     updateText(dt)
                 }
+                if(!isGameOver){
+                    hotkey(32, togglePause)
+                } else{
+                    hotkey('r', reset)
+                }
                 drawGame()
                 break
+            case 'maybeReset':
+                updateReset()
+                drawReset()
+                break
         }
-
+        releasedKeys = {}
         isMouseClicked = false
         requestAnimationFrame(gameLoop)
     }
@@ -1203,17 +1309,7 @@
             if(diamondPaddle.bonus > 0) {
                 // Diamond Paddle collision
                 if (rectCircleColliding(diamondPaddle, ball)) {
-                    // Calculate bounce angle based on relative hit position on the diamondPaddle
-                    const relativeY = (ball.y - (diamondPaddle.y + diamondPaddle.h / 2)) / (diamondPaddle.h / 2)
-                    const bounceAngle = relativeY * (Math.PI / 3) // Max angle of +/- 60 degrees
-    
-                    // Set velocity and reset state
-                    ball.vx = Math.cos(bounceAngle) * BALL_SPEED
-                    ball.vy = Math.sin(bounceAngle) * BALL_SPEED
-                    ball.x = diamondPaddle.x + diamondPaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
-                    ball.isDisabled = false
-                    ball.blocksHitCount = ball.type === 'piercing' ? 0 : Infinity // Reset block hit count
-                    ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
+                    hitBall(diamondPaddle, ball)
     
                     if (ball.type === 'projectile') {
                         // Projectile hits diamondPaddle: diamondPaddle damage 
@@ -1256,17 +1352,7 @@
             }
             // Paddle collision
             else if (rectCircleColliding(paddle, ball)) {
-                // Calculate bounce angle based on relative hit position on the paddle
-                const relativeY = (ball.y - (paddle.y + paddle.h / 2)) / (paddle.h / 2)
-                const bounceAngle = relativeY * (Math.PI / 3) // Max angle of +/- 60 degrees
-
-                // Set velocity and reset state
-                ball.vx = Math.cos(bounceAngle) * BALL_SPEED
-                ball.vy = Math.sin(bounceAngle) * BALL_SPEED
-                ball.x = paddle.x + paddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
-                ball.isDisabled = false
-                ball.blocksHitCount = ball.type === 'piercing' ? 0 : Infinity // Reset block hit count
-                ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
+                hitBall(paddle, ball)
 
                 if (ball.type === 'projectile') {
                     // Projectile hits paddle: paddle damage and self-destruction
@@ -1310,17 +1396,7 @@
                 if (rectCircleColliding(pinkPaddle, ball)) {
                     //pink paddle ignores certain balls
                     if(ball.type !== 'projectile') {
-                        // Calculate bounce angle based on relative hit position on the pink paddle
-                        const relativeY = (ball.y - (pinkPaddle.y + pinkPaddle.h / 2)) / (pinkPaddle.h / 2)
-                        const bounceAngle = relativeY * (Math.PI / 3) // Max angle of +/- 60 degrees
-        
-                        // Set velocity and reset state
-                        ball.vx = Math.cos(bounceAngle) * BALL_SPEED
-                        ball.vy = Math.sin(bounceAngle) * BALL_SPEED
-                        ball.x = pinkPaddle.x + pinkPaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
-                        ball.isDisabled = false
-                        ball.blocksHitCount = ball.type === 'piercing' ? 0 : Infinity // Reset block hit count
-                        ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
+                        hitBall(pinkPaddle, ball)
                         
                         if (ball.type === 'pink') {
                             let greaterPaddle = Math.max(paddle.h, diamondPaddle.h)
@@ -1439,6 +1515,7 @@
         if (livesLostCount >= MAX_LIVES) {
             isGameOver = true
         }
+
     }
     //stop when paused, not when game over
     function updateText(dt) {
@@ -1455,17 +1532,11 @@
 
     function updateMenu() {
         // Check if the mouse is inside the button's boundaries
-        menuButton.isHovering =
-            mousePosition.x >= menuButton.x &&
-            mousePosition.x <= menuButton.x + menuButton.w &&
-            mousePosition.y >= menuButton.y &&
-            mousePosition.y <= menuButton.y + menuButton.h
-
-        // Start the game if the button is clicked
-        if (menuButton.isHovering && isMouseClicked) {
-            startGame()
-            currentScene = 'game'
-        }
+        menuButton.update()
+    }
+    function updateReset() {
+        resumeButton.update()
+        resetButton.update()
     }
 
     /* --- DISPLAY FUNCTIONS --- */
@@ -1555,7 +1626,7 @@
             ctx.fillText(
                 'YOU DIED',
                 VIRTUAL_WIDTH / 2, 
-                VIRTUAL_HEIGHT / 2 - 42,
+                VIRTUAL_HEIGHT / 2 - 32,
             )
             
             ctx.fillStyle = COLORS.WHITE
@@ -1563,13 +1634,13 @@
             ctx.fillText(
                 `You got a score of ${currentScore}!`,
                 VIRTUAL_WIDTH / 2,
-                VIRTUAL_HEIGHT / 2 + 9,
+                VIRTUAL_HEIGHT / 2 + 19,
             )
             ctx.font = '18px system-ui, sans-serif'
             ctx.fillText(
-                'Click Restart to play again.',
+                'Click Restart or press R to play again.',
                 VIRTUAL_WIDTH / 2,
-                VIRTUAL_HEIGHT / 2 + 45,
+                VIRTUAL_HEIGHT / 2 + 55,
             )
         }
 
@@ -1604,30 +1675,27 @@
             275,
         )
         ctx.textAlign = 'left'
-        ctx.fillText('Last updated: June 17, 2026', 20, VIRTUAL_HEIGHT - 30)
+        ctx.fillText('Last updated: June 23, 2026', 20, VIRTUAL_HEIGHT - 30)
 
 
         // Button
-        const btnColor = menuButton.isHovering ? COLORS.WHITE : COLORS.WHITE_D
-        drawRoundRect(
-            menuButton.x,
-            menuButton.y,
-            menuButton.w,
-            menuButton.h,
-            10,
-            btnColor,
-        )
+        menuButton.display()
+    }
 
-        // Button text
+    function drawReset() {
+        // Background
         ctx.fillStyle = COLORS.BLACK
-        ctx.font = '28px system-ui, sans-serif'
+        ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+
+        // Title
+        ctx.fillStyle = COLORS.WHITE_D
+        ctx.font = '60px system-ui, sans-serif'
         ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(
-            'Start Game',
-            menuButton.x + menuButton.w / 2,
-            menuButton.y + menuButton.h / 2,
-        )
+        ctx.fillText('Confirm Reset?', VIRTUAL_WIDTH / 2, 200)
+
+        // Button
+        resumeButton.display()
+        resetButton.display()
     }
 
     function pauseGame() {
