@@ -22,4 +22,4 @@ isolate any css and javascript. There should be no inline styles or scripts unle
 
 ai policy: absolutely no ai-generated text or images. large codebases that are added or linked and look largely ai-generated will be refused, but small snippets are allowed and indeed can't be enforced even if we ban it.
 
-we aren't accepting minified javascript since there's literally no reason to do that other than to submit malware
+No minified javascript. Sorry!
