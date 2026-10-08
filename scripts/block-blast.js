@@ -16,7 +16,7 @@
     const EXPLODE_BLOCK_RADIUS = 80
     const MITOSIS_BALL_COUNT = 1 // Number of balls spawned by a mitosis block
     const PIERCING_BLOCK_LIMIT = 3 // Number of blocks a piercing ball can break
-    const BLOCKING_PROJECTILE_LIMIT = 8 // Number of projectiles a blocking ball can break
+    const BLOCKING_PROJECTILE_LIMIT = 16 // Number of projectiles a blocking ball can break
     /* --- PARTICLE SETTINGS --- */
     const NUM_BLOCK_BREAK_PARTICLES_PER_AXIS = 3 // Total particles is this value squared
     const NUM_EXPLOSION_PARTICLES = 25
@@ -1164,7 +1164,7 @@
                         ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
                         ctx.fill()
                     }else{
-                        drawRegularPoly(this.x, this.y, 1 + Math.max(0, BLOCKING_PROJECTILE_LIMIT - this.ballsHitCount), this.r, COLORS.PURPLE, turn)
+                        drawRegularPoly(this.x, this.y, 1 + Math.floor(Math.max(0, BLOCKING_PROJECTILE_LIMIT - this.ballsHitCount)/2), this.r, COLORS.PURPLE, turn)
                     }
                     
                     break
