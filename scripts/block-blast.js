@@ -16,7 +16,7 @@
     const EXPLODE_BLOCK_RADIUS = 80
     const MITOSIS_BALL_COUNT = 1 // Number of balls spawned by a mitosis block
     const PIERCING_BLOCK_LIMIT = 3 // Number of blocks a piercing ball can break
-    const BLOCKING_PROJECTILE_LIMIT = 5 // Number of projectiles a blocking ball can break
+    const BLOCKING_PROJECTILE_LIMIT = 8 // Number of projectiles a blocking ball can break
     /* --- PARTICLE SETTINGS --- */
     const NUM_BLOCK_BREAK_PARTICLES_PER_AXIS = 3 // Total particles is this value squared
     const NUM_EXPLOSION_PARTICLES = 25
@@ -42,9 +42,9 @@
     const DIAMOND_DAMAGE = 20 // Amount of additional paddle height given by diamonds
     const PINK_RADIUS = 8
     const PINK_SPEED = 240
-    const BLOCKING_RADIUS_MAX = 24
+    const BLOCKING_RADIUS_MAX = 40
     const BLOCKING_RADIUS_MIN = 8
-    const BLOCKING_SPEED = 240
+    const BLOCKING_SPEED = 190
 
     /* --- COLORS --- */
     const COLORS = {
@@ -86,7 +86,7 @@
     const EXPLODE_BLOCK_WEIGHT = 1
     const DIAMOND_BLOCK_WEIGHT = 0.5 //the light blue blocks
     const PINK_BLOCK_WEIGHT = 0.08
-    const BLOCKING_BLOCK_WEIGHT = 0.04
+    const BLOCKING_BLOCK_WEIGHT = 0.05 //0.04
     const TOTAL_SPECIAL_WEIGHT =
         PROJECTILE_BLOCK_WEIGHT +
         BOMB_BLOCK_WEIGHT +
@@ -98,7 +98,12 @@
         BLOCKING_BLOCK_WEIGHT
 
     /* --- BUTTON --- */
-    function button(x, y, w, h, text, operation, hotKey){
+    function hotkey(key, effect){
+        if(releasedKeys[key]){
+            effect()
+        }
+    }
+    function button(x, y, w, h, text, operation, myKey){
         this.x = x
         this.y = y
         this.w = w
@@ -106,15 +111,15 @@
         this.text = text
         this.operation = operation
         this.isHovering = false
-        this.key = hotKey
+        this.key = myKey
 
-        this.update() = {
+        this.update = () => {
             // Check if the mouse is inside the button's boundaries
             this.isHovering =
-                mousePosition.x >= this.x &&
+                (mousePosition.x >= this.x &&
                 mousePosition.x <= this.x + this.w &&
                 mousePosition.y >= this.y &&
-                mousePosition.y <= this.y + this.h
+                mousePosition.y <= this.y + this.h)
             if(this.key !== undefined && keys[this.key]){
                 this.isHovering = true
             }
@@ -124,10 +129,10 @@
                 this.operation()
             }
             if(this.key !== undefined){
-                hotKey(this.key, this.operation)
+                hotkey(this.key, this.operation)
             }
         }
-        this.display() = {
+        this.display = () => {
             // Button
             const btnColor = this.isHovering ? COLORS.WHITE : COLORS.WHITE_D
             drawRoundRect(
@@ -154,9 +159,9 @@
 
     /* --- GAME STATE VARIABLES --- */
     // const menuButton = { x: 500, y: 350, w: 200, h: 60, isHovering: false }
-    let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, 32) //32 is the key code for space
-    let resumeButton = new button(500 - 110, 350, 200, 60, 'Cancel', resume, 32)
-    let resetButton = new button(500 + 110, 350, 200, 60, 'Restart', reset, 13) //13 is the key code for enter
+    let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, " ")
+    let resumeButton = new button(500 - 110, 350, 200, 60, 'Cancel', resume, " ")
+    let resetButton = new button(500 + 110, 350, 200, 60, 'Restart', reset, 'enter')
     let currentScene = GAME_SCENE_NAME
     let livesLostCount = 0
     let currentScore = 0
@@ -226,12 +231,6 @@
             ? 'Resume'
             : 'Pause'
         lastTime = performance.now()
-    }
-
-    function hotkey(key, effect){
-        if(releasedKeys[key]){
-            effect()
-        }
     }
 
     // Function to generate angles that are not too horizontal
@@ -325,8 +324,15 @@
     })
 
     const keys = {}
-    const releasedKeys = {}
+    let releasedKeys = {}
     window.addEventListener('keydown', (e) => {
+        switch(e.code){
+            case "ArrowUp": case "ArrowDown": case "Space": 
+                e.preventDefault() 
+                break
+            default: 
+                break // do not block other keys
+        }//stole this from stack overflow hope this works
         keys[e.key.toLowerCase()] = true // Use toLowerCase for consistent key checking
     })
     window.addEventListener('keyup', (e) => {
@@ -768,6 +774,7 @@
                         this.y + this.h / 2,
                         BOMB_RADIUS,
                         'bomb',
+                        PROJECTILE_SPEED,
                         true,
                     )
                     bomb.vx = PROJECTILE_SPEED * Math.cos(bombAngle)
@@ -801,6 +808,7 @@
                             this.y + this.h / 2,
                             hittingBall.r,
                             hittingBall.type,
+                            hittingBall.speed,
                             true,
                         )
                         mitosisBall.vx = BALL_SPEED * Math.cos(mitosisAngle)
@@ -897,8 +905,8 @@
                         this.y + this.h / 2,
                         BLOCKING_RADIUS_MIN,
                         'blocking',
-                        true,
-                        BLOCKING_SPEED
+                        BLOCKING_SPEED,
+                        true
                     )
                     blockingBall.vx = BLOCKING_SPEED * Math.cos(blockingAngle)
                     blockingBall.vy = BLOCKING_SPEED * Math.sin(blockingAngle)
@@ -950,7 +958,7 @@
             }
 
             // Normal and Bomb ball collision action
-            if (ball.type !== 'projectile' && ball.type !== 'diamond' && ball.type !== 'pink' && !ball.isDisabled) {
+            if (ball.type !== 'projectile' && ball.type !== 'diamond' && ball.type !== 'pink' && ball.type !== 'blocking' && !ball.isDisabled) {
                 if (ball.type === 'bomb' && this.type !== 'mitosis') {
                     // Bomb explosion on impact
                     const bombCenterX = ball.x
@@ -1056,7 +1064,7 @@
                 if(this.isDisabled){
                     this.r = BLOCKING_RADIUS_MIN
                 } else {
-                    this.r = BLOCKING_RADIUS_MAX + (BLOCKING_RADIUS_MIN - BLOCKING_RADIUS_MAX) * Math.max(0, BLOCKING_PROJECTILE_LIMIT - this.ballsHitCount)
+                    this.r = BLOCKING_RADIUS_MIN + (BLOCKING_RADIUS_MAX - BLOCKING_RADIUS_MIN) * Math.max(0, BLOCKING_PROJECTILE_LIMIT - this.ballsHitCount) / BLOCKING_PROJECTILE_LIMIT
                 }
             }
 
@@ -1225,7 +1233,7 @@
                     updateText(dt)
                 }
                 if(!isGameOver){
-                    hotkey(32, togglePause)
+                    hotkey(' ', togglePause)
                 } else{
                     hotkey('r', reset)
                 }
@@ -1260,8 +1268,8 @@
 
         // Paddle movement
         paddle.dy = 0
-        if (keys['w'] || keys[38]) paddle.dy = -PADDLE_SPEED //38 is up key
-        if (keys['s'] || keys[40]) paddle.dy = PADDLE_SPEED //40 is down key
+        if (keys['w'] || keys['arrowup']) paddle.dy = -PADDLE_SPEED 
+        if (keys['s'] || keys['arrowdown']) paddle.dy = PADDLE_SPEED
 
         paddle.y += paddle.dy * dt
         // Clamp paddle position within vertical bounds
@@ -1675,7 +1683,7 @@
             275,
         )
         ctx.textAlign = 'left'
-        ctx.fillText('Last updated: June 23, 2026', 20, VIRTUAL_HEIGHT - 30)
+        ctx.fillText('Last updated: September 30, 2026', 20, VIRTUAL_HEIGHT - 30)
 
 
         // Button
