@@ -31,6 +31,19 @@
     const INITIAL_PINK_HEIGHT = 0
     const PINK_DEPLETION_RATE = 8 //The rate at which the pink paddle shrinks
 
+    /* --- SUPER PADDLE AND STUFF --- */
+    const SUPER_WIDTH = 1200
+    const SUPER_DURATIONS = [3, 10, 5] //Charge time, fire time, shrink time
+    const SUPER_TIMER_MAX = 18
+    const SUPER_TIMER = 0
+    const SUPER_EXPLOSION_RADIUS = 1500
+    const SUPER_EXPLOSION_SPEED = 400;
+    // const SUPER_MODE = false
+    const SUPER_BONUS = 20 //Extra paddle height when collecting rainbow ball
+    const SUPER_HEIGHT_FLUCTUATION = 0.1
+    const SUPER_EXPLOSION_EXEMPT = ['normal', 'blocking', 'rainbow']
+    const SUPER_LASER_IGNORE = ['blocking', 'rainbow']
+
     /* --- BALL/PROJECTILE PROPERTIES --- */
     const BALL_RADIUS = 10
     const BOMB_RADIUS = 12
@@ -45,11 +58,23 @@
     const BLOCKING_RADIUS_MAX = 40
     const BLOCKING_RADIUS_MIN = 8
     const BLOCKING_SPEED = 190
+    const RAINBOW_RADIUS = 10
+    const RAINBOW_SPEED = 200
 
     /* --- COLORS --- */
+    function rainbow(n){
+        //cycle is completed every 3n
+        const tp = 2 * Math.PI / 3
+        const r = Math.round(Math.min(Math.max((Math.cos(tp * n) + 0.5) * 255, 0), 255))
+        const g = Math.round(Math.min(Math.max((Math.cos(tp * n - tp) + 0.5) * 255, 0), 255))
+        const b = Math.round(Math.min(Math.max((Math.cos(tp * n + tp) + 0.5) * 255, 0), 255))
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
+    }
+    let rainbowed = rainbow(0)
+    let colorTimer = 0
     const COLORS = {
         BLACK: '#050505',
-        WHITE: '#fff',
+        WHITE: '#ffffff',
         WHITE_D: '#e6e6e6',
         GRAY: '#777',
         GRAY_L: '#ccc',
@@ -64,7 +89,7 @@
         PINK: '#ffb6c1',
         PINK_T: '#ffb6c180',
         PURPLE: '#cc66ff',
-        PURPLE_D: '#552288'
+        PURPLE_D: '#552288',
     }
     const COLORS2 = {
         BLACK_T: 'rgba(0,0,0,0.6)',
@@ -86,7 +111,8 @@
     const EXPLODE_BLOCK_WEIGHT = 1
     const DIAMOND_BLOCK_WEIGHT = 0.5 //the light blue blocks
     const PINK_BLOCK_WEIGHT = 0.08
-    const BLOCKING_BLOCK_WEIGHT = 0.05 //0.04
+    const BLOCKING_BLOCK_WEIGHT = 0.04
+    const RAINBOW_BLOCK_WEIGHT = 0.002
     const TOTAL_SPECIAL_WEIGHT =
         PROJECTILE_BLOCK_WEIGHT +
         BOMB_BLOCK_WEIGHT +
@@ -95,7 +121,8 @@
         EXPLODE_BLOCK_WEIGHT + 
         DIAMOND_BLOCK_WEIGHT + 
         PINK_BLOCK_WEIGHT + 
-        BLOCKING_BLOCK_WEIGHT
+        BLOCKING_BLOCK_WEIGHT + 
+        RAINBOW_BLOCK_WEIGHT
 
     /* --- BUTTON --- */
     function hotkey(key, effect){
@@ -173,6 +200,8 @@
     let brokenBlockParticles = []
     let explosionParticles = []
     let floatyTexts = [] //aka flavor text
+    let superExplosions = []
+    let superMode = false
 
     /* --- GAME MANAGEMENT FUNCTIONS --- */
     function startGame() {
@@ -264,16 +293,16 @@
     const ctx = canvas.getContext('2d')
     const VIRTUAL_WIDTH = 1200
     const VIRTUAL_HEIGHT = 600
-    const MAX_WIDTH = 1000
+    const MAX_WIDTH = 2000
     const MAX_HEIGHT = 1000
-
+    
     let lastTime = performance.now() // Time since last frame for delta time calculation
 
     window.addEventListener('resize', resizeCanvas)
     function resizeCanvas() {
         // Find target canvas size from the available window and maximum size
-        const targetWidth = Math.min(window.innerWidth - 40, MAX_WIDTH)
-        const targetHeight = Math.min(window.innerHeight - 140, MAX_HEIGHT)
+        const targetWidth = Math.min(window.innerWidth * 0.8, MAX_WIDTH)
+        const targetHeight = Math.min(window.innerHeight * 0.8, MAX_HEIGHT)
         const targetScale = Math.min(
             targetWidth / VIRTUAL_WIDTH,
             targetHeight / VIRTUAL_HEIGHT,
@@ -386,7 +415,11 @@
         this.display = function(){
             ctx.globalAlpha = Math.max(0, (this.lifetime/this.LIFETIME)) //Text fades out
             ctx.font = `${this.size}px system-ui, sans-serif`
-            ctx.fillStyle = this.color
+            if(this.color === 'rainbow'){
+                ctx.fillStyle = rainbowed
+            }else{
+                ctx.fillStyle = this.color
+            }
             ctx.textAlign = this.textAlign
             ctx.fillText(this.text, this.x, this.y)
             ctx.globalAlpha = 1//don't wanna make everything else transparent
@@ -395,6 +428,8 @@
     function score(amount, color = COLORS.GRAY){
         if(amount === 0)
             return
+        if(superMode && amount > 0)
+            color = 'rainbow'
         
         currentScore += amount
         
@@ -403,7 +438,7 @@
         let textWidth = ctx.measureText(`Score: ${currentScore}`).width
 
         //So if the previous score is the same source, make my number bigger and remove the previous one
-        if(floatyTexts.length && floatyTexts[floatyTexts.length - 1].type === 'score' && floatyTexts[floatyTexts.length - 1].color === color){
+        if(floatyTexts.length && floatyTexts[floatyTexts.length - 1].type === 'score' && (floatyTexts[floatyTexts.length - 1].color === color)){
             let x = Number(floatyTexts[floatyTexts.length - 1].text)
             amount += x
             floatyTexts.pop()
@@ -441,6 +476,16 @@
         h: INITIAL_PINK_HEIGHT,
         dy: 0, // Velocity in y-direction
     }
+    // super paddle AKA super paddle
+    let superPaddle = {
+        x: 30 + PADDLE_WIDTH,
+        y: 0, 
+        w: SUPER_WIDTH,
+        h: 0,
+        dih: 0, //display height
+        dy: 0, // Velocity in y-direction
+        timer: SUPER_TIMER
+    }
 
     // Helper for Rect-Circle Collision Detection
     function rectCircleColliding(rect, circle) {
@@ -463,7 +508,7 @@
         return dist <= colDist
     }
 
-    function hitBall(thePaddle, ball){
+    function hitBall(thePaddle, ball, snap = true){
         // Calculate bounce angle based on relative hit position on the paddle
         const relativeY = (ball.y - (thePaddle.y + thePaddle.h / 2)) / (thePaddle.h / 2)
         const bounceAngle = relativeY * (Math.PI / 3) // Max angle of +/- 60 degrees
@@ -476,7 +521,9 @@
         ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
         if(ball.type === 'blocking')
             ball.r = BLOCKING_RADIUS_MAX
-        ball.x = thePaddle.x + thePaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
+        if(snap){
+            ball.x = thePaddle.x + thePaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
+        }
     }
 
     // Helper to draw a rounded rectangle
@@ -634,6 +681,18 @@
                 BLOCKING_BLOCK_WEIGHT
             ){
                 this.type = 'blocking'
+            } else if (
+                rand <
+                PROJECTILE_BLOCK_WEIGHT +
+                BOMB_BLOCK_WEIGHT +
+                PIERCING_BLOCK_WEIGHT +
+                MITOSIS_BLOCK_WEIGHT + 
+                DIAMOND_BLOCK_WEIGHT + 
+                PINK_BLOCK_WEIGHT + 
+                BLOCKING_BLOCK_WEIGHT +
+                RAINBOW_BLOCK_WEIGHT
+            ){
+                this.type = 'rainbow'
             }else {
                 this.type = 'explode'
             }
@@ -665,6 +724,9 @@
                 case 'blocking':
                     ctx.fillStyle = COLORS.PURPLE
                     break
+                case 'rainbow':
+                    ctx.fillStyle = rainbowed
+                    break
                 default:
                     ctx.fillStyle = COLORS.GRAY
                     break
@@ -680,6 +742,7 @@
             if (this.isDestroyed) return
             this.isDestroyed = true
 
+          if(!superMode){ //Don't make these particles during super mode for lag
             // Spawn block break particles
             const particleCount = NUM_BLOCK_BREAK_PARTICLES_PER_AXIS
             for (let x = 0; x < particleCount; x++) {
@@ -692,7 +755,7 @@
                     const vy = speed * Math.sin(angle)
                     const vr = (Math.random() - 0.5) * 10
                     const size = Math.min(this.w, this.h) / particleCount
-                    let color = '#777'
+                    let color = COLORS.GRAY
 
                     switch (this.type) {
                         case 'projectile':
@@ -714,6 +777,9 @@
                                     case 'piercing':
                                         color = COLORS.GREEN
                                         break
+                                    case 'rainbow':
+                                        color = rainbowed
+                                        break
                                     default:
                                         color = COLORS.WHITE
                                         break
@@ -734,6 +800,9 @@
                         case 'blocking':
                             color = COLORS.PURPLE
                             break
+                        case 'rainbow':
+                            color = rainbowed
+                            break
                     }
                     const particle = new BlockBreakParticle(
                         px,
@@ -748,6 +817,7 @@
                     brokenBlockParticles.push(particle)
                 }
             }
+          }
 
             // Handle special block type activation
             switch (this.type) {
@@ -807,7 +877,7 @@
                             this.x + this.w / 2,
                             this.y + this.h / 2,
                             hittingBall.r,
-                            hittingBall.type,
+                            ((superMode && hittingBall.type === 'normal') ? 'pseudoNormal' : hittingBall.type),
                             hittingBall.speed,
                             true,
                         )
@@ -912,6 +982,20 @@
                     blockingBall.vy = BLOCKING_SPEED * Math.sin(blockingAngle)
                     balls.push(blockingBall)
                     break
+                case 'rainbow':
+                    // Spawn rainbow ball
+                    const raingle = generateAngle((5 * Math.PI) / 8, -1)
+                    const rainBall = new Ball(
+                        this.x + this.w / 2,
+                        this.y + this.h / 2,
+                        RAINBOW_RADIUS,
+                        'rainbow',
+                        RAINBOW_SPEED,
+                    )
+                    rainBall.vx = RAINBOW_SPEED * Math.cos(raingle)
+                    rainBall.vy = RAINBOW_SPEED * Math.sin(raingle)
+                    balls.push(rainBall)
+                    break
             }
             // currentScore++
         }
@@ -1005,7 +1089,6 @@
                     this.activateEffect(ball)
                     // add flavor text for score increase
                     let color = COLORS.GRAY
-                    
                     switch (ball.type) {
                         case 'bomb':
                             color = COLORS.BLUE_L
@@ -1013,10 +1096,16 @@
                         case 'piercing':
                             color = COLORS.GREEN
                             break
+                        case 'rainbow':
+                            color = 'rainbow'
+                            break
                         default:
                             color = COLORS.WHITE
                             break
                     }// projectiles, diamonds, and pinks shouldn't be breaking blocks anyways
+                    if(superMode){
+                        color = 'rainbow'
+                    }
                     score(1, color)
                 }
             }
@@ -1071,16 +1160,20 @@
             // Wall collisions (top and bottom)
             if (this.y - this.r <= 0) {
                 this.y = this.r
-                this.vy *= -1
+                this.vy = Math.abs(this.vy)
             } else if (this.y + this.r >= VIRTUAL_HEIGHT) {
                 this.y = VIRTUAL_HEIGHT - this.r
-                this.vy *= -1
+                this.vy = -Math.abs(this.vy)
             }
 
             // Right wall collision (for standard bounce)
             if (this.x + this.r >= VIRTUAL_WIDTH) {
                 this.x = VIRTUAL_WIDTH - this.r
-                this.vx *= -1
+                this.vx = -Math.abs(this.vx)
+            } else 
+            if(superMode && this.type === 'normal' && this.x - this.r <= 0){
+                this.x = this.r
+                this.vx = Math.abs(this.vx)
             }
 
             // Prevent horizontal bounce stall
@@ -1168,6 +1261,25 @@
                     }
                     
                     break
+                case 'rainbow':
+                    // Pulsing effect for an active bomb ball
+                    let pulse = Math.pow(
+                        Math.sin((performance.now() - this.spawnTime) / 200),
+                        2,
+                    )
+                    if (pulse > 0.8) {
+                        pulse = 1
+                    } else {
+                        pulse = 0.8 + pulse * 0.2
+                    }
+                    ctx.fillStyle = lerpHexColor(rainbowed, COLORS.WHITE, 0.8)
+                    ctx.arc(this.x, this.y, this.r * pulse * 1.5, 0, Math.PI * 2)
+                    ctx.fill()
+                    ctx.beginPath()
+                    ctx.fillStyle = rainbowed
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
+                    ctx.fill()
+                    break
                 default: // 'normal' ball
                     ctx.fillStyle = COLORS.WHITE
                     ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
@@ -1212,10 +1324,55 @@
         }, 500)
     }
 
+    function superExplosion(x, y){
+        this.x = x
+        this.y = y
+        this.r = 0
+        
+        this.display = function() {
+            //Inner outline that's white-ish and transparent
+            ctx.save()
+            ctx.beginPath()
+            ctx.globalAlpha = 0.4
+            ctx.strokeStyle = lerpHexColor(rainbowed, COLORS.WHITE, 0.5)
+            ctx.lineWidth = this.r * 0.1
+            ctx.arc(this.x, this.y, this.r * 0.95, 0, 2 * Math.PI)
+            ctx.stroke()
+            ctx.restore()
+            //Outer outline that's a sort of shockwave front
+            ctx.beginPath()
+            ctx.strokeStyle = rainbowed
+            ctx.lineWidth = 10
+            ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI)
+            ctx.stroke()
+        }
+
+        this.update = function(dt) {
+            this.r += dt * SUPER_EXPLOSION_SPEED
+        }
+
+        this.checkForCollisions = function(ball) {
+            if(!circleCircleColliding(this, ball) || SUPER_EXPLOSION_EXEMPT.includes(ball.type)){
+                return false
+            }
+
+            if(ball.type === 'projectile'){
+                score(1, 'rainbow')
+            }if(ball.type === 'diamond'){
+                score(2, 'rainbow')
+            }else{
+                score(5, 'rainbow')
+            }
+            ball.isDestroyed = true
+
+            return true
+        }
+    }
+
     /* --- GAME LOOP & UPDATES --- */
     function gameLoop(now) {
         // If paused, freeze dt so physics doesn’t jump on resume
-        const dt = isPaused ? 0 : Math.min((now - lastTime) / 1000, 0.033)
+        const dt = isPaused ? 0 : Math.min((now - lastTime) / 1000, 0.033) //dt is in seconds I think???
         lastTime = now
 
         switch (currentScene) {
@@ -1265,8 +1422,11 @@
             projectile.vy = PROJECTILE_SPEED * Math.sin(angle)
             balls.push(projectile)
         }
+        //rainbow color
+        colorTimer+=dt
+        rainbowed = rainbow(colorTimer)
 
-        // Paddle movement
+        // Paddle movement (update paddle)
         paddle.dy = 0
         if (keys['w'] || keys['arrowup']) paddle.dy = -PADDLE_SPEED 
         if (keys['s'] || keys['arrowdown']) paddle.dy = PADDLE_SPEED
@@ -1282,7 +1442,54 @@
             let paul = VIRTUAL_HEIGHT - pinkPaddle.h
             pinkPaddle.y = paul - paddle.y * ((paul) / (VIRTUAL_HEIGHT - paddle.h))
         }
-        
+        // Update super paddle
+        if(superPaddle.timer > 0){
+            superPaddle.timer -= dt
+            if(SUPER_TIMER_MAX - superPaddle.timer < SUPER_DURATIONS[0]){
+                superMode = false
+                superPaddle.h = 0
+            }else if(SUPER_TIMER_MAX - superPaddle.timer < SUPER_DURATIONS[0] + SUPER_DURATIONS[1]){
+                if(!superMode){
+                    //when first switching modes, shoot out some particles
+                    // too lazy to make new particles so I'm just reusing block break particles
+                    const particleCount = 18
+                    const px = paddle.x + paddle.w
+                    for (let si = 0; si < particleCount; si++) {
+                        const py = paddle.y + paddle.h / 2 + paddle.h/4 * Math.random()
+                        const speed = 150 + Math.random() * 150
+                        const angle = Math.random() * Math.PI - Math.PI / 2
+                        const vx = speed * Math.cos(angle)
+                        const vy = speed * Math.sin(angle)
+                        const vr = (Math.random() - 0.5) * 10
+                        const size = 10
+                        const color = rainbow(3 * Math.random())
+                        const particle = new BlockBreakParticle(
+                            px,
+                            py,
+                            size,
+                            vx,
+                            vy,
+                            vr,
+                            color,
+                            1,
+                        )
+                        brokenBlockParticles.push(particle)
+                    }
+                }
+                superMode = true
+                superPaddle.h = paddle.h
+            }else if(SUPER_TIMER_MAX - superPaddle.timer < SUPER_DURATIONS[0] + SUPER_DURATIONS[1] + SUPER_DURATIONS[2]){
+                superMode = true
+                superPaddle.h = paddle.h * (superPaddle.timer / SUPER_DURATIONS[2])
+            }
+            superPaddle.dih = superPaddle.h * (1 + SUPER_HEIGHT_FLUCTUATION * Math.sin(superPaddle.timer * Math.PI))
+            superPaddle.y = paddle.y + (paddle.h - superPaddle.h) / 2.0
+
+            if(superPaddle.timer <= 0){
+                superExplosions.push(new superExplosion(diamondPaddle.x + diamondPaddle.w, diamondPaddle.y + diamondPaddle.h / 2))
+                superMode = false
+            }
+        }
 
         // Update particles and remove expired ones
         for (let i = 0; i < brokenBlockParticles.length; i++) {
@@ -1302,12 +1509,22 @@
             }
         }
 
+        //update super explosions
+        for (let i = 0; i < superExplosions.length; i++) {
+            const explosion = superExplosions[i]
+            explosion.update(dt)
+            if (explosion.r >= SUPER_EXPLOSION_RADIUS) {
+                superExplosions.splice(i, 1)
+                i--
+            }
+        }
+
         // Ball movement and collisions
         for (let i = balls.length - 1; i >= 0; i--) {
             // Iterate backward for safe removal
             const ball = balls[i]
             if (ball.isDestroyed || ball.x + ball.r < 0) {
-                // Check for destruction or off-screen
+                // Check for destruction or off-screen (remove balls that are too far left)
                 balls.splice(i, 1)
                 continue
             }
@@ -1339,6 +1556,18 @@
                         score(-1, COLORS.RED)
                         continue // Skip block collision check for this destroyed projectile
                     }
+                    if (ball.type === 'rainbow') {
+                        paddle.h += SUPER_BONUS
+                        if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
+                            superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
+                        }else{
+                            superPaddle.timer = SUPER_TIMER_MAX
+                        }
+                        
+                        //delete the ball
+                        balls.splice(i, 1)
+                        continue
+                    }
                     if (ball.type === 'diamond') {
                         // Diamond hits paddle: paddle growth
                         diamondPaddle.bonus += DIAMOND_DAMAGE
@@ -1353,8 +1582,9 @@
                         pinkPaddle.h = (pinkPaddle.h <= diamondPaddle.h) ? diamondPaddle.h + pinkPaddle.h / 2 : pinkPaddle.h + diamondPaddle.h/2
                         // pinkPaddle.h += diamondPaddle.h
                         balls.splice(i, 1)
+                        
                         score(5, COLORS.PINK)
-                        continue // Skip block collision check for this destroyed diamond
+                        continue // Skip block collision check for this destroyed pink
                     }
                 }
             }
@@ -1381,6 +1611,17 @@
                     score(-1, COLORS.RED)
                     continue // Skip block collision check for this destroyed projectile
                 }
+                if (ball.type === 'rainbow') {
+                    paddle.h += SUPER_BONUS
+                    if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
+                        superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
+                    }else{
+                        superPaddle.timer = SUPER_TIMER_MAX
+                    }
+                    //delete the ball
+                    balls.splice(i, 1)
+                    continue
+                }
                 if (ball.type === 'diamond') {
                     // Diamond hits paddle: paddle growth
                     diamondPaddle.bonus += DIAMOND_DAMAGE
@@ -1396,7 +1637,7 @@
                     // pinkPaddle.h += paddle.h
                     balls.splice(i, 1)
                     score(5, COLORS.PINK)
-                    continue // Skip block collision check for this destroyed diamond
+                    continue // Skip block collision check for this destroyed pink
                 }
             }
             if(pinkPaddle.h > 0) {
@@ -1419,6 +1660,20 @@
                     }
                 }
             }
+            if(superMode) {
+                // Super Paddle collision
+                if (rectCircleColliding(superPaddle, ball) && !SUPER_LASER_IGNORE.includes(ball.type)) {
+                    if(ball.vx < 0 && ball.x < VIRTUAL_WIDTH - (1 + NUM_INITIAL_ROWS * BLOCK_SIZE)){
+                        hitBall(superPaddle, ball, false)
+                    }
+                    if (ball.type === 'projectile') {
+                        //kill projectiles
+                        balls.splice(i, 1)
+                        score(1, 'rainbow')
+                        continue // Skip block collision check for this destroyed projectile
+                    }
+                }
+            }
 
             // Block collision
             for (let j = 0; j < blocks.length; j++) {
@@ -1435,6 +1690,12 @@
                     continue
                 }
                 if (balls[j].checkForCollisions(ball)) {
+                    break // Only check one collision per ball per frame for simplicity
+                }
+            }
+            // Explosion-ball collision
+            for (let j = 0; j < superExplosions.length; j++) {
+                if (superExplosions[j].checkForCollisions(ball)) {
                     break // Only check one collision per ball per frame for simplicity
                 }
             }
@@ -1567,19 +1828,52 @@
             ctx.fillRect(netX, y, netWidth, segmentHeight)
         }
 
+        
+        // Draw Pink Paddle
+        if(pinkPaddle.h > 0)
+            drawRoundRect(pinkPaddle.x, pinkPaddle.y, pinkPaddle.w, pinkPaddle.h, Math.min(6, pinkPaddle.h), COLORS.PINK_T)
+        // Draw Diamond Paddle
+        if(diamondPaddle.bonus) //meant to appear under the main paddle
+            drawRoundRect(diamondPaddle.x, diamondPaddle.y, diamondPaddle.w, diamondPaddle.h, 6, COLORS.DIAMOND)
+
+        // Draw Paddle
+        drawRoundRect(paddle.x, paddle.y, paddle.w, paddle.h, 6, COLORS.WHITE_D)
+
+        //Draw Super Paddle
+        if(superPaddle.timer > 0){
+            let tt = SUPER_TIMER_MAX - superPaddle.timer
+            if(tt < SUPER_DURATIONS[0]){
+                let pxw = paddle.x + paddle.w
+                let pyh = paddle.y + paddle.h/2
+                ctx.beginPath()
+                ctx.strokeStyle = rainbowed
+                ctx.lineWidth = 3
+                ctx.arc(pxw, pyh, 100 * (superPaddle.timer % 0.5), 0, 2 * Math.PI)
+                ctx.stroke()
+                let pr = 50 * (SUPER_DURATIONS[0] - tt)
+                let pa = pyh / (Math.PI * 100) + tt * 2
+                for(let ppi = 0; ppi < 6; ppi++){
+                    ctx.beginPath()
+                    ctx.strokeStyle = rainbowed
+                    ctx.lineWidth = 2
+                    ctx.arc(pxw + pr * Math.cos(pa + ppi * Math.PI/3), pyh + pr * Math.sin(pa + ppi * Math.PI/3), 5, 0, 2 * Math.PI)
+                    ctx.stroke()
+                }
+            }else{
+                drawRoundRect(superPaddle.x, superPaddle.y + (superPaddle.h - superPaddle.dih) / 2, superPaddle.w, superPaddle.dih, (superPaddle.h/4), rainbowed)
+                ctx.save()
+                ctx.globalAlpha = 0.3
+                drawRoundRect(superPaddle.x, superPaddle.y + (superPaddle.h - 0.75 * superPaddle.dih) / 2, superPaddle.w, (superPaddle.dih) * 0.75, (superPaddle.h/4), COLORS.WHITE)
+                drawRoundRect(superPaddle.x, superPaddle.y + (superPaddle.h - 0.5 * superPaddle.dih) / 2, superPaddle.w, (superPaddle.dih) * 0.5, (superPaddle.h/4), COLORS.WHITE)
+                drawRoundRect(superPaddle.x, superPaddle.y + (superPaddle.h - 0.15 * superPaddle.dih) / 2, superPaddle.w, (superPaddle.dih) * 0.15, (superPaddle.h/4), COLORS.WHITE)
+                ctx.restore()
+            }
+        }
+        
         // Blocks
         for (const block of blocks) {
             block.display()
         }
-        // Pink Paddle
-        if(pinkPaddle.h > 0)
-            drawRoundRect(pinkPaddle.x, pinkPaddle.y, pinkPaddle.w, pinkPaddle.h, Math.min(6, pinkPaddle.h), COLORS.PINK_T)
-        // Diamond Paddle
-        if(diamondPaddle.bonus) //meant to appear under the main paddle
-            drawRoundRect(diamondPaddle.x, diamondPaddle.y, diamondPaddle.w, diamondPaddle.h, 6, COLORS.DIAMOND)
-
-        // Paddle
-        drawRoundRect(paddle.x, paddle.y, paddle.w, paddle.h, 6, COLORS.WHITE_D)
 
         // Balls
         for (const ball of balls) {
@@ -1592,6 +1886,10 @@
         }
         for (const particle of explosionParticles) {
             particle.display()
+        }
+        // Super explosions
+        for (const explosion of superExplosions){
+            explosion.display()
         }
         // Draw flavor text
         for (const text of floatyTexts) {
@@ -1683,7 +1981,7 @@
             275,
         )
         ctx.textAlign = 'left'
-        ctx.fillText('Last updated: September 30, 2026', 20, VIRTUAL_HEIGHT - 30)
+        ctx.fillText('Last updated: October 13, 2026', 20, VIRTUAL_HEIGHT - 30)
 
 
         // Button
