@@ -110,9 +110,9 @@
     const MITOSIS_BLOCK_WEIGHT = 1
     const EXPLODE_BLOCK_WEIGHT = 1
     const DIAMOND_BLOCK_WEIGHT = 0.5 //the light blue blocks
-    const PINK_BLOCK_WEIGHT = 0.08
+    const PINK_BLOCK_WEIGHT = 0.069
     const BLOCKING_BLOCK_WEIGHT = 0.04
-    const RAINBOW_BLOCK_WEIGHT = 0.002
+    const RAINBOW_BLOCK_WEIGHT = 0.003
     const TOTAL_SPECIAL_WEIGHT =
         PROJECTILE_BLOCK_WEIGHT +
         BOMB_BLOCK_WEIGHT +
@@ -170,6 +170,16 @@
                 10,
                 btnColor,
             )
+            if(this.isHovering)
+                strokeRoundRect(
+                    this.x - 5,
+                    this.y - 5,
+                    this.w + 10,
+                    this.h + 10,
+                    15,
+                    btnColor,
+                    5,
+                )
 
             // Button text
             ctx.fillStyle = COLORS.BLACK
@@ -183,15 +193,48 @@
             )
         }
     }
+    function buttonGroup(buttons){
+        this.buttons = buttons
+        this.update = function(){
+            for(const part of Object.values(this.buttons)){
+                part.update()
+            }
+        }
+        this.display = function(){
+            for(const part of Object.values(this.buttons)){
+                part.display()
+            }
+        }
+    }
 
     /* --- GAME STATE VARIABLES --- */
     // const menuButton = { x: 500, y: 350, w: 200, h: 60, isHovering: false }
-    let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, " ")
-    let resumeButton = new button(500 - 110, 350, 200, 60, 'Cancel', resume, " ")
-    let resetButton = new button(500 + 110, 350, 200, 60, 'Restart', reset, 'enter')
+    let menuButtons = new buttonGroup({
+        start: new button(500, 350, 200, 60, 'Start Game', reset, " "),
+        info: new button(500, 430, 200, 60, 'More Info', info, "i")
+    })
+    // let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, " ")
+    // let infoButton = new button(500, 430, 200, 60, 'More Info', info, "i")
+    let resetButtons = new buttonGroup({
+        resume: new button(500 - 110, 300, 200, 60, 'Cancel', resume, " "),
+        reset: new button(500 + 110, 300, 200, 60, 'Restart', reset, 'enter'),
+        menu: new button(500 - 110, 380, 200, 60, 'Menu', menu, "m"),
+        info: new button(500 + 110, 380, 200, 60, 'More Info', info, "i")
+    })
+    
+    // let resumeButton = new button(500 - 110, 300, 200, 60, 'Cancel', resume, " ")
+    // let resetButton = new button(500 + 110, 300, 200, 60, 'Restart', reset, 'enter')
+    let infoButtons = new buttonGroup({
+        back: new button(20, 20, 180, 50, 'Back', back, "escape"),
+        nextPage: new button(1000, 530, 180, 50, 'Next', () => infoPage++, "arrowright"),
+        prevPage: new button(20, 530, 180, 50, 'Previous', () => infoPage--, "arrowleft")
+    })
+    
     let currentScene = GAME_SCENE_NAME
+    let previousScene = GAME_SCENE_NAME
     let livesLostCount = 0
     let currentScore = 0
+    let highScore = 0
     let isGameOver = false
     let blocksAreAdvancing = false
     let isPaused = false
@@ -206,6 +249,7 @@
     /* --- GAME MANAGEMENT FUNCTIONS --- */
     function startGame() {
         currentScene = GAME_SCENE_NAME
+        previousScene = currentScene
         currentScore = 0
         isGameOver = false
         paddle.y = (VIRTUAL_HEIGHT - PADDLE_HEIGHT_INITIAL) / 2
@@ -225,14 +269,30 @@
         projectileTimer = 0
     }
     function considerReset() {
+        previousScene = currentScene
         currentScene = 'maybeReset'
     }
     function reset(){
+        previousScene = currentScene
         startGame()
         currentScene = 'game'
     }
     function resume(){
+        previousScene = currentScene
         currentScene = 'game'
+    }
+    function info(){
+        previousScene = currentScene
+        currentScene = 'info'
+    }
+    function menu(){
+        previousScene = currentScene
+        currentScene = 'menu'
+    }
+    function back(){
+        let temp = currentScene
+        currentScene = previousScene
+        previousScene = temp
     }
 
     function die() { //Clear all balls and reset paddle and serving ball, but maintain blocks
@@ -328,6 +388,56 @@
         lastTime = performance.now()
         requestAnimationFrame(gameLoop)
     })
+
+    /* --- INFO MENU SETUP -- */
+    const INFO_PAGES = 2
+    let infoPage = 1
+    const X_MARGIN = 50
+    const Y_MARGIN = 110
+    const INFO_ROWS = 5
+    const INFO_COLS = 2
+    const X_SPACING = (VIRTUAL_WIDTH - X_MARGIN * 2) / INFO_COLS
+    const Y_SPACING = (VIRTUAL_HEIGHT - Y_MARGIN * 2) / INFO_ROWS
+    const INFO_BLOCKS = [
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 3, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 4, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 3, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 4, BLOCK_SIZE, BLOCK_SIZE),
+    ]
+    INFO_BLOCKS[0].type = 'normal'
+    INFO_BLOCKS[1].type = 'projectile'
+    INFO_BLOCKS[2].type = 'bomb'
+    INFO_BLOCKS[3].type = 'piercing'
+    INFO_BLOCKS[4].type = 'diamond'
+    INFO_BLOCKS[5].type = 'pink'
+    INFO_BLOCKS[6].type = 'blocking'
+    INFO_BLOCKS[7].type = 'rainbow'
+    INFO_BLOCKS[8].type = 'mitosis'
+    INFO_BLOCKS[9].type = 'explode'
+
+    const INFO_BALLS = [//x, y, radius, type
+        new Ball(X_MARGIN, Y_MARGIN, BALL_RADIUS, 'normal'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING, BALL_RADIUS, 'projectile'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING * 2, BALL_RADIUS, 'bomb'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING * 3, BALL_RADIUS, 'piercing'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING * 4, BALL_RADIUS, 'diamond'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN, BALL_RADIUS, 'pink'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING, BALL_RADIUS, 'blocking'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING * 2, BALL_RADIUS, 'rainbow'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING * 3, BALL_RADIUS, 'pseudoNormal'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING * 4, BALL_RADIUS, 'pseudoRainbow')
+    ]
+    INFO_BALLS[3].blocksHitCount = 0
+    INFO_BALLS[4].vx = DIAMOND_SPEED / 2
+    INFO_BALLS[6].ballsHitCount = 0
+    INFO_BALLS[6].vx = BLOCKING_SPEED / 2
+    INFO_BALLS[6].r = BLOCKING_RADIUS_MAX
 
     /* --- USER INPUT HANDLING --- */
     let mousePosition = { x: 0, y: 0 }
@@ -538,6 +648,36 @@
         ctx.arcTo(x, y, x + w, y, radius)
         ctx.closePath()
         ctx.fill()
+    }
+    function strokeRoundRect(x, y, w, h, r, strokeStyle, lineWidth) {
+        ctx.strokeStyle = strokeStyle
+        ctx.lineWidth = lineWidth
+        
+        const radius = Math.min(r, w / 2, h / 2)
+        ctx.beginPath()
+        ctx.moveTo(x + radius, y)
+        ctx.arcTo(x + w, y, x + w, y + h, radius)
+        ctx.arcTo(x + w, y + h, x, y + h, radius)
+        ctx.arcTo(x, y + h, x, y, radius)
+        ctx.arcTo(x, y, x + w, y, radius)
+        ctx.closePath()
+        ctx.stroke()
+    }
+    function fillStrokeRoundRect(x, y, w, h, r, fillStyle, strokeStyle, lineWidth) {
+        ctx.fillStyle = fillStyle
+        ctx.strokeStyle = strokeStyle
+        ctx.lineWidth = lineWidth
+        
+        const radius = Math.min(r, w / 2, h / 2)
+        ctx.beginPath()
+        ctx.moveTo(x + radius, y)
+        ctx.arcTo(x + w, y, x + w, y + h, radius)
+        ctx.arcTo(x + w, y + h, x, y + h, radius)
+        ctx.arcTo(x, y + h, x, y, radius)
+        ctx.arcTo(x, y, x + w, y, radius)
+        ctx.closePath()
+        ctx.fill()
+        ctx.stroke()
     }
     //helper to draw regular polygon
     function drawRegularPoly(x, y, points, r, fillStyle, angle = 0){
@@ -1280,7 +1420,12 @@
                     ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
                     ctx.fill()
                     break
-                default: // 'normal' ball
+                case 'pseudoRainbow':
+                    ctx.fillStyle = rainbowed
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
+                    ctx.fill()
+                    break;
+                default: // 'normal' ball and pseudoNormal
                     ctx.fillStyle = COLORS.WHITE
                     ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
                     ctx.fill()
@@ -1360,6 +1505,8 @@
                 score(1, 'rainbow')
             }if(ball.type === 'diamond'){
                 score(2, 'rainbow')
+            }if(ball.type === 'pseudoRainbow'){
+                //nothing
             }else{
                 score(5, 'rainbow')
             }
@@ -1399,6 +1546,11 @@
             case 'maybeReset':
                 updateReset()
                 drawReset()
+                break
+
+            case 'info':
+                updateInfo()
+                drawInfo()
                 break
         }
         releasedKeys = {}
@@ -1475,9 +1627,22 @@
                         )
                         brokenBlockParticles.push(particle)
                     }
+                    for (let i = 0; i < 4; i++) {
+                        const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
+                        const sBall = new Ball(
+                            paddle.x,
+                            paddle.y + paddle.h / 2,
+                            BALL_RADIUS,
+                            'pseudoRainbow',
+                        )
+                        sBall.vx = BALL_SPEED * Math.cos(angle)
+                        sBall.vy = BALL_SPEED * Math.sin(angle)
+                        balls.push(sBall)
+                    }
                 }
                 superMode = true
                 superPaddle.h = paddle.h
+                
             }else if(SUPER_TIMER_MAX - superPaddle.timer < SUPER_DURATIONS[0] + SUPER_DURATIONS[1] + SUPER_DURATIONS[2]){
                 superMode = true
                 superPaddle.h = paddle.h * (superPaddle.timer / SUPER_DURATIONS[2])
@@ -1560,12 +1725,26 @@
                         paddle.h += SUPER_BONUS
                         if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
                             superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
+                            // create pseudo rainbow balls
+                            for (let i = 0; i < 4; i++) {
+                                const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
+                                const sBall = new Ball(
+                                    paddle.x,
+                                    paddle.y + paddle.h / 2,
+                                    BALL_RADIUS,
+                                    'pseudoRainbow',
+                                )
+                                sBall.vx = BALL_SPEED * Math.cos(angle)
+                                sBall.vy = BALL_SPEED * Math.sin(angle)
+                                balls.push(sBall)
+                            }
                         }else{
                             superPaddle.timer = SUPER_TIMER_MAX
                         }
                         
                         //delete the ball
                         balls.splice(i, 1)
+                        
                         continue
                     }
                     if (ball.type === 'diamond') {
@@ -1782,6 +1961,9 @@
         }
 
         if (livesLostCount >= MAX_LIVES) {
+            if(currentScore > highScore){
+                highScore = currentScore //save high score
+            }
             isGameOver = true
         }
 
@@ -1801,11 +1983,16 @@
 
     function updateMenu() {
         // Check if the mouse is inside the button's boundaries
-        menuButton.update()
+        menuButtons.update()
     }
     function updateReset() {
-        resumeButton.update()
-        resetButton.update()
+        resetButtons.update()
+    }
+    function updateInfo(){
+        colorTimer+=0.01
+        rainbowed = rainbow(colorTimer)
+        infoButtons.update()
+        infoPage = Math.min(Math.max(1, infoPage), INFO_PAGES)
     }
 
     /* --- DISPLAY FUNCTIONS --- */
@@ -1981,11 +2168,11 @@
             275,
         )
         ctx.textAlign = 'left'
-        ctx.fillText('Last updated: October 13, 2026', 20, VIRTUAL_HEIGHT - 30)
+        ctx.fillText('Last updated: November 4, 2026', 20, VIRTUAL_HEIGHT - 30)
 
 
         // Button
-        menuButton.display()
+        menuButtons.display()
     }
 
     function drawReset() {
@@ -2000,8 +2187,64 @@
         ctx.fillText('Confirm Reset?', VIRTUAL_WIDTH / 2, 200)
 
         // Button
-        resumeButton.display()
-        resetButton.display()
+        resetButtons.display()
+    }
+
+    function drawInfo() {
+        // Background
+        ctx.fillStyle = COLORS.BLACK
+        ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+
+        // Title
+        ctx.fillStyle = COLORS.WHITE_D
+        ctx.font = '60px system-ui, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText('INFORMATION', VIRTUAL_WIDTH / 2, 50)
+        // Subtitle
+        ctx.font = '40px system-ui, sans-serif'
+        ctx.fillText('High Score: ' + highScore, VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT - 50)
+
+        // Information
+        const SHIFT = 40
+        ctx.font = '20px system-ui, sans-serif'
+        ctx.textAlign = 'left'
+        switch(infoPage){
+            case 1:
+                for(const block of INFO_BLOCKS){
+                    block.display()
+                }
+                ctx.fillStyle = COLORS.GRAY_L
+                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN)
+                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING)
+                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2)
+                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3)
+                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4)
+                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN)
+                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING)
+                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2)
+                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3)
+                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4)
+                break;
+            case 2: 
+                for(const ball of INFO_BALLS){
+                    ball.display()
+                }
+                ctx.fillStyle = COLORS.GRAY_L
+                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN)
+                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING)
+                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2)
+                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3)
+                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4)
+                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN)
+                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING)
+                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2)
+                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3)
+                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4)
+                break;
+        }
+      
+        // Button
+        infoButtons.display()
     }
 
     function pauseGame() {
