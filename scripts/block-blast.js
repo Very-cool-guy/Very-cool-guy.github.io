@@ -42,7 +42,7 @@
     const SUPER_BONUS = 20 //Extra paddle height when collecting rainbow ball
     const SUPER_HEIGHT_FLUCTUATION = 0.1
     const SUPER_EXPLOSION_EXEMPT = ['normal', 'blocking', 'rainbow']
-    const SUPER_LASER_IGNORE = ['blocking', 'rainbow']
+    const SUPER_LASER_IGNORE = ['blocking', 'rainbow', 'pseudoBlocking']
 
     /* --- BALL/PROJECTILE PROPERTIES --- */
     const BALL_RADIUS = 10
@@ -558,6 +558,33 @@
         let text = ((amount >= 0) ? "+" : "") + `${amount}`
         floatyTexts.push(new floatyText(text, VIRTUAL_WIDTH * 0.4 + textWidth/2, 40, 30, color, 'score'))
     }
+    /* --- TEXT FUNCTIONS --- */
+    // Helper function that turns a number into a percent value (string)
+    function pcent(n){
+        return (n * 100).toFixed(2) + "%"
+    }
+    // Helper for text wrap
+    function textBlock(text, x, y, width, lineDown){
+        //why the hell does ctx not have line breaks?
+        const words = text.split(" ")
+        let down = 0
+        let line = ""
+        let line2 = ""
+        for(word of words){
+            line2 += word + " "
+            if(ctx.measureText(line2).width > width){
+                ctx.fillText(line, x, y + down)
+                down += lineDown
+                line2 = word + " "
+                line = line2
+            }else{
+                line = line2
+            }
+        }
+        if(line.length){
+            ctx.fillText(line, x, y + down)
+        }
+    }
 
     /* --- GAME OBJECTS --- */
 
@@ -628,8 +655,8 @@
         ball.vy = Math.sin(bounceAngle) * ball.speed
         ball.isDisabled = false
         ball.blocksHitCount = ball.type === 'piercing' ? 0 : Infinity // Reset block hit count
-        ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
-        if(ball.type === 'blocking')
+        ball.ballsHitCount = (ball.type === 'blocking' || ball.type === 'pseudoBlocking') ? 0 : Infinity // Reset ball hit count
+        if(ball.type === 'blocking' || ball.type === 'pseudoBlocking')
             ball.r = BLOCKING_RADIUS_MAX
         if(snap){
             ball.x = thePaddle.x + thePaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
@@ -1114,7 +1141,7 @@
                         this.x + this.w / 2,
                         this.y + this.h / 2,
                         BLOCKING_RADIUS_MIN,
-                        'blocking',
+                        (superMode ? 'pseudoBlocking' : 'blocking'),
                         BLOCKING_SPEED,
                         true
                     )
@@ -1182,7 +1209,7 @@
             }
 
             // Normal and Bomb ball collision action
-            if (ball.type !== 'projectile' && ball.type !== 'diamond' && ball.type !== 'pink' && ball.type !== 'blocking' && !ball.isDisabled) {
+            if (ball.type !== 'projectile' && ball.type !== 'diamond' && ball.type !== 'pink' && ball.type !== 'blocking' && ball.type !== 'pseudoBlocking' && !ball.isDisabled) {
                 if (ball.type === 'bomb' && this.type !== 'mitosis') {
                     // Bomb explosion on impact
                     const bombCenterX = ball.x
@@ -1289,7 +1316,7 @@
             this.x += this.vx * dt
             this.y += this.vy * dt
 
-            if(this.type === 'blocking'){
+            if(this.type === 'blocking' || this.type === 'pseudoBlocking'){
                 if(this.isDisabled){
                     this.r = BLOCKING_RADIUS_MIN
                 } else {
@@ -1390,6 +1417,7 @@
                     ctx.fill()
                     break
                 case 'blocking':
+                case 'pseudoBlocking':
                     turn = this.vx * (performance.now() - this.spawnTime) / 24000
                     
                     if(this.isDisabled){
@@ -1437,7 +1465,7 @@
             if(this.isDisabled || !circleCircleColliding(this, ball)) {
                 return false
             }
-            if(!(this.type === 'blocking' && ball.type === 'projectile')) {
+            if(!((this.type === 'blocking' || this.type === 'pseudoBlocking') && ball.type === 'projectile')) {
                 return false
             } //this entire function is only meant for blocking-projectile interactions, but may need more in the future
 
@@ -1503,9 +1531,11 @@
 
             if(ball.type === 'projectile'){
                 score(1, 'rainbow')
-            }if(ball.type === 'diamond'){
+            }else if(ball.type === 'diamond'){
                 score(2, 'rainbow')
-            }if(ball.type === 'pseudoRainbow'){
+            }else if(ball.type === 'pseudoBlocking'){
+                score(10, 'rainbow')
+            }else if(ball.type === 'pseudoRainbow'){
                 //nothing
             }else{
                 score(5, 'rainbow')
@@ -1627,7 +1657,7 @@
                         )
                         brokenBlockParticles.push(particle)
                     }
-                    for (let i = 0; i < 4; i++) {
+                    for (let i = 0; i < 3; i++) {
                         const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
                         const sBall = new Ball(
                             paddle.x,
@@ -1723,10 +1753,11 @@
                     }
                     if (ball.type === 'rainbow') {
                         paddle.h += SUPER_BONUS
+                        diamondPaddle.h = paddle.h + diamondPaddle.bonus
                         if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
                             superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
                             // create pseudo rainbow balls
-                            for (let i = 0; i < 4; i++) {
+                            for (let i = 0; i < 3; i++) {
                                 const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
                                 const sBall = new Ball(
                                     paddle.x,
@@ -1794,6 +1825,19 @@
                     paddle.h += SUPER_BONUS
                     if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
                         superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
+                        // create pseudo rainbow balls
+                        for (let i = 0; i < 3; i++) {
+                            const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
+                            const sBall = new Ball(
+                                paddle.x,
+                                paddle.y + paddle.h / 2,
+                                BALL_RADIUS,
+                                'pseudoRainbow',
+                            )
+                            sBall.vx = BALL_SPEED * Math.cos(angle)
+                            sBall.vy = BALL_SPEED * Math.sin(angle)
+                            balls.push(sBall)
+                        }
                     }else{
                         superPaddle.timer = SUPER_TIMER_MAX
                     }
@@ -2168,7 +2212,7 @@
             275,
         )
         ctx.textAlign = 'left'
-        ctx.fillText('Last updated: November 4, 2026', 20, VIRTUAL_HEIGHT - 30)
+        ctx.fillText('Last updated: November 5, 2026', 20, VIRTUAL_HEIGHT - 30)
 
 
         // Button
@@ -2205,7 +2249,10 @@
         ctx.fillText('High Score: ' + highScore, VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT - 50)
 
         // Information
-        const SHIFT = 40
+        const SHIFT = 40 //shift text to the right
+        const LD = 20 //shift description text down
+        const LB = 15 //line break distance
+        const TW = X_SPACING - SHIFT * 2 //text block width
         ctx.font = '20px system-ui, sans-serif'
         ctx.textAlign = 'left'
         switch(infoPage){
@@ -2213,33 +2260,57 @@
                 for(const block of INFO_BLOCKS){
                     block.display()
                 }
+                ctx.fillStyle = COLORS.WHITE
+                textBlock('Normal Block (' + pcent(1 - PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Projectile Block (' + pcent(PROJECTILE_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Bomb Block (' + pcent(BOMB_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Piercing Block (' + pcent(PIERCING_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Diamond Block (' + pcent(DIAMOND_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
+                textBlock('Pink Block (' + pcent(PINK_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Blocking Block (' + pcent(BLOCKING_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Rainbow Block (' + pcent(RAINBOW_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Mitosis Block (' + pcent(MITOSIS_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Explosive Block (' + pcent(EXPLODE_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
                 ctx.fillStyle = COLORS.GRAY_L
-                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN)
-                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING)
-                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2)
-                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3)
-                ctx.fillText('block', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4)
-                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN)
-                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING)
-                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2)
-                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3)
-                ctx.fillText('block', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4)
+                ctx.font = '15px system-ui, sans-serif'
+                textBlock('A regular block that breaks in one hit and gives one point like all other blocks.', X_MARGIN + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('Spawns 5 Projectiles when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('Spawns a Bomb Ball when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('Spawns a Piercing Ball when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3 + LD, TW, LB)
+                textBlock('Spawns 2 Diamonds when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
+                textBlock('Spawns a Pink Ball when broken.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('Spawns a Blocking Ball when broken.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('Spawns a Rainbow Ball when broken.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('When destroyed, duplicates the ball that hit it. Does not duplicate explosions.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3 + LD, TW, LB)
+                textBlock('Explodes when broken. Destroys all blocks within ' + EXPLODE_BLOCK_RADIUS + 'px.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
                 break;
             case 2: 
                 for(const ball of INFO_BALLS){
                     ball.display()
                 }
+                ctx.fillStyle = COLORS.WHITE
+                textBlock('Normal Ball (moves ' + BALL_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Projectile (moves ' + PROJECTILE_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Bomb Ball (moves ' + PROJECTILE_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Piercing Ball (moves ' + BALL_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Diamond (moves ' + DIAMOND_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
+                textBlock('Pink Ball (moves ' + PINK_SPEED + 'px/s)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Blocking Ball (moves ' + BLOCKING_SPEED + 'px/s)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Rainbow Ball (moves ' + RAINBOW_SPEED + 'px/s)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Pseudo-Balls', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Pseudo-Rainbow Ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
                 ctx.fillStyle = COLORS.GRAY_L
-                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN)
-                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING)
-                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2)
-                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3)
-                ctx.fillText('ball', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4)
-                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN)
-                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING)
-                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2)
-                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3)
-                ctx.fillText('ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4)
+                ctx.font = '15px system-ui, sans-serif'
+                textBlock('A regular ball that destroys blocks when hitting them and bounces off. If you run out of Normal Balls, you die.', X_MARGIN + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('A collectable ball that shrinks your paddle by ' + PROJECTILE_DAMAGE + 'px and gives -1 score when collected. If the paddle shrinks to 0, you die.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('A ball that explodes on impact with a block, destroying blocks within ' + BOMB_EXPLOSION_RADIUS + 'px. The bomb is destroyed instead of bouncing back.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('A ball that can pierce and destroy ' + PIERCING_BLOCK_LIMIT + ' blocks before bouncing back. Recharges when hit by the Paddle.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3+ LD, TW, LB)
+                textBlock('A collectable that extends your paddle by ' + DIAMOND_DAMAGE + 'px and gives 1-2 score when collected. Gives a bonus Diamond Paddle length instead of extending the main Paddle.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
+                textBlock('A collectable that creates an extra Pink Paddle that moves the opposite way from your main Paddle. Gives 5 score when collected. The Pink Paddle ignores projectiles and can only collect Pink Balls.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('A large ball that blocks up to ' + BLOCKING_PROJECTILE_LIMIT + ' projectiles. Recharges when hit by the Paddle.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('A rare collectable ball that charges up and activates a rainbow laser, in addition to launching 3 Pseudo-Rainbow Balls. Also extends main Paddle by ' + SUPER_BONUS + 'px.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('Pseudo-Balls are identical to the corresponding ball, but are created while the rainbow effect is active and destroyed when it ends.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3 + LD, TW, LB)
+                textBlock('A rainbow-colored Pseudo-Normal Ball.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
                 break;
         }
       
