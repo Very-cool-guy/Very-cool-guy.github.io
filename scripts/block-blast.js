@@ -42,7 +42,7 @@
     const SUPER_BONUS = 20 //Extra paddle height when collecting rainbow ball
     const SUPER_HEIGHT_FLUCTUATION = 0.1
     const SUPER_EXPLOSION_EXEMPT = ['normal', 'blocking', 'rainbow']
-    const SUPER_LASER_IGNORE = ['blocking', 'rainbow']
+    const SUPER_LASER_IGNORE = ['blocking', 'rainbow', 'pseudoBlocking']
 
     /* --- BALL/PROJECTILE PROPERTIES --- */
     const BALL_RADIUS = 10
@@ -110,9 +110,9 @@
     const MITOSIS_BLOCK_WEIGHT = 1
     const EXPLODE_BLOCK_WEIGHT = 1
     const DIAMOND_BLOCK_WEIGHT = 0.5 //the light blue blocks
-    const PINK_BLOCK_WEIGHT = 0.08
+    const PINK_BLOCK_WEIGHT = 0.069
     const BLOCKING_BLOCK_WEIGHT = 0.04
-    const RAINBOW_BLOCK_WEIGHT = 0.002
+    const RAINBOW_BLOCK_WEIGHT = 0.003
     const TOTAL_SPECIAL_WEIGHT =
         PROJECTILE_BLOCK_WEIGHT +
         BOMB_BLOCK_WEIGHT +
@@ -170,6 +170,16 @@
                 10,
                 btnColor,
             )
+            if(this.isHovering)
+                strokeRoundRect(
+                    this.x - 5,
+                    this.y - 5,
+                    this.w + 10,
+                    this.h + 10,
+                    15,
+                    btnColor,
+                    5,
+                )
 
             // Button text
             ctx.fillStyle = COLORS.BLACK
@@ -183,15 +193,48 @@
             )
         }
     }
+    function buttonGroup(buttons){
+        this.buttons = buttons
+        this.update = function(){
+            for(const part of Object.values(this.buttons)){
+                part.update()
+            }
+        }
+        this.display = function(){
+            for(const part of Object.values(this.buttons)){
+                part.display()
+            }
+        }
+    }
 
     /* --- GAME STATE VARIABLES --- */
     // const menuButton = { x: 500, y: 350, w: 200, h: 60, isHovering: false }
-    let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, " ")
-    let resumeButton = new button(500 - 110, 350, 200, 60, 'Cancel', resume, " ")
-    let resetButton = new button(500 + 110, 350, 200, 60, 'Restart', reset, 'enter')
+    let menuButtons = new buttonGroup({
+        start: new button(500, 350, 200, 60, 'Start Game', reset, " "),
+        info: new button(500, 430, 200, 60, 'More Info', info, "i")
+    })
+    // let menuButton = new button(500, 350, 200, 60, 'Start Game', reset, " ")
+    // let infoButton = new button(500, 430, 200, 60, 'More Info', info, "i")
+    let resetButtons = new buttonGroup({
+        resume: new button(500 - 110, 300, 200, 60, 'Cancel', resume, " "),
+        reset: new button(500 + 110, 300, 200, 60, 'Restart', reset, 'enter'),
+        menu: new button(500 - 110, 380, 200, 60, 'Menu', menu, "m"),
+        info: new button(500 + 110, 380, 200, 60, 'More Info', info, "i")
+    })
+    
+    // let resumeButton = new button(500 - 110, 300, 200, 60, 'Cancel', resume, " ")
+    // let resetButton = new button(500 + 110, 300, 200, 60, 'Restart', reset, 'enter')
+    let infoButtons = new buttonGroup({
+        back: new button(20, 20, 180, 50, 'Back', back, "escape"),
+        nextPage: new button(1000, 530, 180, 50, 'Next', () => infoPage++, "arrowright"),
+        prevPage: new button(20, 530, 180, 50, 'Previous', () => infoPage--, "arrowleft")
+    })
+    
     let currentScene = GAME_SCENE_NAME
+    let previousScene = GAME_SCENE_NAME
     let livesLostCount = 0
     let currentScore = 0
+    let highScore = 0
     let isGameOver = false
     let blocksAreAdvancing = false
     let isPaused = false
@@ -206,6 +249,7 @@
     /* --- GAME MANAGEMENT FUNCTIONS --- */
     function startGame() {
         currentScene = GAME_SCENE_NAME
+        previousScene = currentScene
         currentScore = 0
         isGameOver = false
         paddle.y = (VIRTUAL_HEIGHT - PADDLE_HEIGHT_INITIAL) / 2
@@ -225,14 +269,30 @@
         projectileTimer = 0
     }
     function considerReset() {
+        previousScene = currentScene
         currentScene = 'maybeReset'
     }
     function reset(){
+        previousScene = currentScene
         startGame()
         currentScene = 'game'
     }
     function resume(){
+        previousScene = currentScene
         currentScene = 'game'
+    }
+    function info(){
+        previousScene = currentScene
+        currentScene = 'info'
+    }
+    function menu(){
+        previousScene = currentScene
+        currentScene = 'menu'
+    }
+    function back(){
+        let temp = currentScene
+        currentScene = previousScene
+        previousScene = temp
     }
 
     function die() { //Clear all balls and reset paddle and serving ball, but maintain blocks
@@ -328,6 +388,56 @@
         lastTime = performance.now()
         requestAnimationFrame(gameLoop)
     })
+
+    /* --- INFO MENU SETUP -- */
+    const INFO_PAGES = 2
+    let infoPage = 1
+    const X_MARGIN = 50
+    const Y_MARGIN = 110
+    const INFO_ROWS = 5
+    const INFO_COLS = 2
+    const X_SPACING = (VIRTUAL_WIDTH - X_MARGIN * 2) / INFO_COLS
+    const Y_SPACING = (VIRTUAL_HEIGHT - Y_MARGIN * 2) / INFO_ROWS
+    const INFO_BLOCKS = [
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 3, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 4, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 2, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 3, BLOCK_SIZE, BLOCK_SIZE),
+        new Block(X_MARGIN - BLOCK_SIZE/2 + X_SPACING, Y_MARGIN - BLOCK_SIZE/2 + Y_SPACING * 4, BLOCK_SIZE, BLOCK_SIZE),
+    ]
+    INFO_BLOCKS[0].type = 'normal'
+    INFO_BLOCKS[1].type = 'projectile'
+    INFO_BLOCKS[2].type = 'bomb'
+    INFO_BLOCKS[3].type = 'piercing'
+    INFO_BLOCKS[4].type = 'diamond'
+    INFO_BLOCKS[5].type = 'pink'
+    INFO_BLOCKS[6].type = 'blocking'
+    INFO_BLOCKS[7].type = 'rainbow'
+    INFO_BLOCKS[8].type = 'mitosis'
+    INFO_BLOCKS[9].type = 'explode'
+
+    const INFO_BALLS = [//x, y, radius, type
+        new Ball(X_MARGIN, Y_MARGIN, BALL_RADIUS, 'normal'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING, BALL_RADIUS, 'projectile'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING * 2, BALL_RADIUS, 'bomb'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING * 3, BALL_RADIUS, 'piercing'),
+        new Ball(X_MARGIN, Y_MARGIN + Y_SPACING * 4, BALL_RADIUS, 'diamond'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN, BALL_RADIUS, 'pink'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING, BALL_RADIUS, 'blocking'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING * 2, BALL_RADIUS, 'rainbow'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING * 3, BALL_RADIUS, 'pseudoNormal'),
+        new Ball(X_MARGIN + X_SPACING, Y_MARGIN + Y_SPACING * 4, BALL_RADIUS, 'pseudoRainbow')
+    ]
+    INFO_BALLS[3].blocksHitCount = 0
+    INFO_BALLS[4].vx = DIAMOND_SPEED / 2
+    INFO_BALLS[6].ballsHitCount = 0
+    INFO_BALLS[6].vx = BLOCKING_SPEED / 2
+    INFO_BALLS[6].r = BLOCKING_RADIUS_MAX
 
     /* --- USER INPUT HANDLING --- */
     let mousePosition = { x: 0, y: 0 }
@@ -448,6 +558,33 @@
         let text = ((amount >= 0) ? "+" : "") + `${amount}`
         floatyTexts.push(new floatyText(text, VIRTUAL_WIDTH * 0.4 + textWidth/2, 40, 30, color, 'score'))
     }
+    /* --- TEXT FUNCTIONS --- */
+    // Helper function that turns a number into a percent value (string)
+    function pcent(n){
+        return (n * 100).toFixed(2) + "%"
+    }
+    // Helper for text wrap
+    function textBlock(text, x, y, width, lineDown){
+        //why the hell does ctx not have line breaks?
+        const words = text.split(" ")
+        let down = 0
+        let line = ""
+        let line2 = ""
+        for(word of words){
+            line2 += word + " "
+            if(ctx.measureText(line2).width > width){
+                ctx.fillText(line, x, y + down)
+                down += lineDown
+                line2 = word + " "
+                line = line2
+            }else{
+                line = line2
+            }
+        }
+        if(line.length){
+            ctx.fillText(line, x, y + down)
+        }
+    }
 
     /* --- GAME OBJECTS --- */
 
@@ -518,8 +655,8 @@
         ball.vy = Math.sin(bounceAngle) * ball.speed
         ball.isDisabled = false
         ball.blocksHitCount = ball.type === 'piercing' ? 0 : Infinity // Reset block hit count
-        ball.ballsHitCount = ball.type === 'blocking' ? 0 : Infinity // Reset ball hit count
-        if(ball.type === 'blocking')
+        ball.ballsHitCount = (ball.type === 'blocking' || ball.type === 'pseudoBlocking') ? 0 : Infinity // Reset ball hit count
+        if(ball.type === 'blocking' || ball.type === 'pseudoBlocking')
             ball.r = BLOCKING_RADIUS_MAX
         if(snap){
             ball.x = thePaddle.x + thePaddle.w + ball.r + 0.1 // Reposition ball to prevent sticking
@@ -538,6 +675,36 @@
         ctx.arcTo(x, y, x + w, y, radius)
         ctx.closePath()
         ctx.fill()
+    }
+    function strokeRoundRect(x, y, w, h, r, strokeStyle, lineWidth) {
+        ctx.strokeStyle = strokeStyle
+        ctx.lineWidth = lineWidth
+        
+        const radius = Math.min(r, w / 2, h / 2)
+        ctx.beginPath()
+        ctx.moveTo(x + radius, y)
+        ctx.arcTo(x + w, y, x + w, y + h, radius)
+        ctx.arcTo(x + w, y + h, x, y + h, radius)
+        ctx.arcTo(x, y + h, x, y, radius)
+        ctx.arcTo(x, y, x + w, y, radius)
+        ctx.closePath()
+        ctx.stroke()
+    }
+    function fillStrokeRoundRect(x, y, w, h, r, fillStyle, strokeStyle, lineWidth) {
+        ctx.fillStyle = fillStyle
+        ctx.strokeStyle = strokeStyle
+        ctx.lineWidth = lineWidth
+        
+        const radius = Math.min(r, w / 2, h / 2)
+        ctx.beginPath()
+        ctx.moveTo(x + radius, y)
+        ctx.arcTo(x + w, y, x + w, y + h, radius)
+        ctx.arcTo(x + w, y + h, x, y + h, radius)
+        ctx.arcTo(x, y + h, x, y, radius)
+        ctx.arcTo(x, y, x + w, y, radius)
+        ctx.closePath()
+        ctx.fill()
+        ctx.stroke()
     }
     //helper to draw regular polygon
     function drawRegularPoly(x, y, points, r, fillStyle, angle = 0){
@@ -974,7 +1141,7 @@
                         this.x + this.w / 2,
                         this.y + this.h / 2,
                         BLOCKING_RADIUS_MIN,
-                        'blocking',
+                        (superMode ? 'pseudoBlocking' : 'blocking'),
                         BLOCKING_SPEED,
                         true
                     )
@@ -1042,7 +1209,7 @@
             }
 
             // Normal and Bomb ball collision action
-            if (ball.type !== 'projectile' && ball.type !== 'diamond' && ball.type !== 'pink' && ball.type !== 'blocking' && !ball.isDisabled) {
+            if (ball.type !== 'projectile' && ball.type !== 'diamond' && ball.type !== 'pink' && ball.type !== 'blocking' && ball.type !== 'pseudoBlocking' && !ball.isDisabled) {
                 if (ball.type === 'bomb' && this.type !== 'mitosis') {
                     // Bomb explosion on impact
                     const bombCenterX = ball.x
@@ -1149,7 +1316,7 @@
             this.x += this.vx * dt
             this.y += this.vy * dt
 
-            if(this.type === 'blocking'){
+            if(this.type === 'blocking' || this.type === 'pseudoBlocking'){
                 if(this.isDisabled){
                     this.r = BLOCKING_RADIUS_MIN
                 } else {
@@ -1250,6 +1417,7 @@
                     ctx.fill()
                     break
                 case 'blocking':
+                case 'pseudoBlocking':
                     turn = this.vx * (performance.now() - this.spawnTime) / 24000
                     
                     if(this.isDisabled){
@@ -1280,7 +1448,12 @@
                     ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
                     ctx.fill()
                     break
-                default: // 'normal' ball
+                case 'pseudoRainbow':
+                    ctx.fillStyle = rainbowed
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
+                    ctx.fill()
+                    break;
+                default: // 'normal' ball and pseudoNormal
                     ctx.fillStyle = COLORS.WHITE
                     ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
                     ctx.fill()
@@ -1292,7 +1465,7 @@
             if(this.isDisabled || !circleCircleColliding(this, ball)) {
                 return false
             }
-            if(!(this.type === 'blocking' && ball.type === 'projectile')) {
+            if(!((this.type === 'blocking' || this.type === 'pseudoBlocking') && ball.type === 'projectile')) {
                 return false
             } //this entire function is only meant for blocking-projectile interactions, but may need more in the future
 
@@ -1358,8 +1531,12 @@
 
             if(ball.type === 'projectile'){
                 score(1, 'rainbow')
-            }if(ball.type === 'diamond'){
+            }else if(ball.type === 'diamond'){
                 score(2, 'rainbow')
+            }else if(ball.type === 'pseudoBlocking'){
+                score(10, 'rainbow')
+            }else if(ball.type === 'pseudoRainbow'){
+                //nothing
             }else{
                 score(5, 'rainbow')
             }
@@ -1399,6 +1576,11 @@
             case 'maybeReset':
                 updateReset()
                 drawReset()
+                break
+
+            case 'info':
+                updateInfo()
+                drawInfo()
                 break
         }
         releasedKeys = {}
@@ -1475,9 +1657,22 @@
                         )
                         brokenBlockParticles.push(particle)
                     }
+                    for (let i = 0; i < 3; i++) {
+                        const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
+                        const sBall = new Ball(
+                            paddle.x,
+                            paddle.y + paddle.h / 2,
+                            BALL_RADIUS,
+                            'pseudoRainbow',
+                        )
+                        sBall.vx = BALL_SPEED * Math.cos(angle)
+                        sBall.vy = BALL_SPEED * Math.sin(angle)
+                        balls.push(sBall)
+                    }
                 }
                 superMode = true
                 superPaddle.h = paddle.h
+                
             }else if(SUPER_TIMER_MAX - superPaddle.timer < SUPER_DURATIONS[0] + SUPER_DURATIONS[1] + SUPER_DURATIONS[2]){
                 superMode = true
                 superPaddle.h = paddle.h * (superPaddle.timer / SUPER_DURATIONS[2])
@@ -1558,14 +1753,29 @@
                     }
                     if (ball.type === 'rainbow') {
                         paddle.h += SUPER_BONUS
+                        diamondPaddle.h = paddle.h + diamondPaddle.bonus
                         if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
                             superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
+                            // create pseudo rainbow balls
+                            for (let i = 0; i < 3; i++) {
+                                const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
+                                const sBall = new Ball(
+                                    paddle.x,
+                                    paddle.y + paddle.h / 2,
+                                    BALL_RADIUS,
+                                    'pseudoRainbow',
+                                )
+                                sBall.vx = BALL_SPEED * Math.cos(angle)
+                                sBall.vy = BALL_SPEED * Math.sin(angle)
+                                balls.push(sBall)
+                            }
                         }else{
                             superPaddle.timer = SUPER_TIMER_MAX
                         }
                         
                         //delete the ball
                         balls.splice(i, 1)
+                        
                         continue
                     }
                     if (ball.type === 'diamond') {
@@ -1615,6 +1825,19 @@
                     paddle.h += SUPER_BONUS
                     if(superPaddle.timer > 0){ //If it's already on, skip the charging phase
                         superPaddle.timer = SUPER_TIMER_MAX - SUPER_DURATIONS[0]
+                        // create pseudo rainbow balls
+                        for (let i = 0; i < 3; i++) {
+                            const angle = generateAngle(MIN_BOUNCE_ANGLE) // Could be adjusted
+                            const sBall = new Ball(
+                                paddle.x,
+                                paddle.y + paddle.h / 2,
+                                BALL_RADIUS,
+                                'pseudoRainbow',
+                            )
+                            sBall.vx = BALL_SPEED * Math.cos(angle)
+                            sBall.vy = BALL_SPEED * Math.sin(angle)
+                            balls.push(sBall)
+                        }
                     }else{
                         superPaddle.timer = SUPER_TIMER_MAX
                     }
@@ -1782,6 +2005,9 @@
         }
 
         if (livesLostCount >= MAX_LIVES) {
+            if(currentScore > highScore){
+                highScore = currentScore //save high score
+            }
             isGameOver = true
         }
 
@@ -1801,11 +2027,16 @@
 
     function updateMenu() {
         // Check if the mouse is inside the button's boundaries
-        menuButton.update()
+        menuButtons.update()
     }
     function updateReset() {
-        resumeButton.update()
-        resetButton.update()
+        resetButtons.update()
+    }
+    function updateInfo(){
+        colorTimer+=0.01
+        rainbowed = rainbow(colorTimer)
+        infoButtons.update()
+        infoPage = Math.min(Math.max(1, infoPage), INFO_PAGES)
     }
 
     /* --- DISPLAY FUNCTIONS --- */
@@ -1981,11 +2212,11 @@
             275,
         )
         ctx.textAlign = 'left'
-        ctx.fillText('Last updated: October 13, 2026', 20, VIRTUAL_HEIGHT - 30)
+        ctx.fillText('Last updated: November 5, 2026', 20, VIRTUAL_HEIGHT - 30)
 
 
         // Button
-        menuButton.display()
+        menuButtons.display()
     }
 
     function drawReset() {
@@ -2000,8 +2231,91 @@
         ctx.fillText('Confirm Reset?', VIRTUAL_WIDTH / 2, 200)
 
         // Button
-        resumeButton.display()
-        resetButton.display()
+        resetButtons.display()
+    }
+
+    function drawInfo() {
+        // Background
+        ctx.fillStyle = COLORS.BLACK
+        ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
+
+        // Title
+        ctx.fillStyle = COLORS.WHITE_D
+        ctx.font = '60px system-ui, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText('INFORMATION', VIRTUAL_WIDTH / 2, 50)
+        // Subtitle
+        ctx.font = '40px system-ui, sans-serif'
+        ctx.fillText('High Score: ' + highScore, VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT - 50)
+
+        // Information
+        const SHIFT = 40 //shift text to the right
+        const LD = 20 //shift description text down
+        const LB = 15 //line break distance
+        const TW = X_SPACING - SHIFT * 2 //text block width
+        ctx.font = '20px system-ui, sans-serif'
+        ctx.textAlign = 'left'
+        switch(infoPage){
+            case 1:
+                for(const block of INFO_BLOCKS){
+                    block.display()
+                }
+                ctx.fillStyle = COLORS.WHITE
+                textBlock('Normal Block (' + pcent(1 - PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Projectile Block (' + pcent(PROJECTILE_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Bomb Block (' + pcent(BOMB_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Piercing Block (' + pcent(PIERCING_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Diamond Block (' + pcent(DIAMOND_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
+                textBlock('Pink Block (' + pcent(PINK_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Blocking Block (' + pcent(BLOCKING_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Rainbow Block (' + pcent(RAINBOW_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Mitosis Block (' + pcent(MITOSIS_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Explosive Block (' + pcent(EXPLODE_BLOCK_WEIGHT/TOTAL_SPECIAL_WEIGHT * PERCENT_OF_BLOCKS_THAT_ARE_SPECIAL) + ' of blocks)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
+                ctx.fillStyle = COLORS.GRAY_L
+                ctx.font = '15px system-ui, sans-serif'
+                textBlock('A regular block that breaks in one hit and gives one point like all other blocks.', X_MARGIN + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('Spawns 5 Projectiles when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('Spawns a Bomb Ball when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('Spawns a Piercing Ball when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3 + LD, TW, LB)
+                textBlock('Spawns 2 Diamonds when broken.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
+                textBlock('Spawns a Pink Ball when broken.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('Spawns a Blocking Ball when broken.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('Spawns a Rainbow Ball when broken.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('When destroyed, duplicates the ball that hit it. Does not duplicate explosions.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3 + LD, TW, LB)
+                textBlock('Explodes when broken. Destroys all blocks within ' + EXPLODE_BLOCK_RADIUS + 'px.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
+                break;
+            case 2: 
+                for(const ball of INFO_BALLS){
+                    ball.display()
+                }
+                ctx.fillStyle = COLORS.WHITE
+                textBlock('Normal Ball (moves ' + BALL_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Projectile (moves ' + PROJECTILE_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Bomb Ball (moves ' + PROJECTILE_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Piercing Ball (moves ' + BALL_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Diamond (moves ' + DIAMOND_SPEED + 'px/s)', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
+                textBlock('Pink Ball (moves ' + PINK_SPEED + 'px/s)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN, TW, LB)
+                textBlock('Blocking Ball (moves ' + BLOCKING_SPEED + 'px/s)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING, TW, LB)
+                textBlock('Rainbow Ball (moves ' + RAINBOW_SPEED + 'px/s)', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2, TW, LB)
+                textBlock('Pseudo-Balls', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3, TW, LB)
+                textBlock('Pseudo-Rainbow Ball', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4, TW, LB)
+                ctx.fillStyle = COLORS.GRAY_L
+                ctx.font = '15px system-ui, sans-serif'
+                textBlock('A regular ball that destroys blocks when hitting them and bounces off. If you run out of Normal Balls, you die.', X_MARGIN + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('A collectable ball that shrinks your paddle by ' + PROJECTILE_DAMAGE + 'px and gives -1 score when collected. If the paddle shrinks to 0, you die.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('A ball that explodes on impact with a block, destroying blocks within ' + BOMB_EXPLOSION_RADIUS + 'px. The bomb is destroyed instead of bouncing back.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('A ball that can pierce and destroy ' + PIERCING_BLOCK_LIMIT + ' blocks before bouncing back. Recharges when hit by the Paddle.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 3+ LD, TW, LB)
+                textBlock('A collectable that extends your paddle by ' + DIAMOND_DAMAGE + 'px and gives 1-2 score when collected. Gives a bonus Diamond Paddle length instead of extending the main Paddle.', X_MARGIN + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
+                textBlock('A collectable that creates an extra Pink Paddle that moves the opposite way from your main Paddle. Gives 5 score when collected. The Pink Paddle ignores projectiles and can only collect Pink Balls.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + LD, TW, LB)
+                textBlock('A large ball that blocks up to ' + BLOCKING_PROJECTILE_LIMIT + ' projectiles. Recharges when hit by the Paddle.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING + LD, TW, LB)
+                textBlock('A rare collectable ball that charges up and activates a rainbow laser, in addition to launching 3 Pseudo-Rainbow Balls. Also extends main Paddle by ' + SUPER_BONUS + 'px.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 2 + LD, TW, LB)
+                textBlock('Pseudo-Balls are identical to the corresponding ball, but are created while the rainbow effect is active and destroyed when it ends.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 3 + LD, TW, LB)
+                textBlock('A rainbow-colored Pseudo-Normal Ball.', X_MARGIN + X_SPACING + SHIFT, Y_MARGIN + Y_SPACING * 4 + LD, TW, LB)
+                break;
+        }
+      
+        // Button
+        infoButtons.display()
     }
 
     function pauseGame() {
